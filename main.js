@@ -121,6 +121,15 @@ function init() {
 
         }
 
+        // var shad = getCloudShader(200,200)
+        // var cloudshader = new PIXI.AbstractFilter(shad.fragmentSrc, shad.uniforms);
+        //
+        // var bg = PIXI.Sprite.fromImage("test_BG.jpg");
+        // bg.width = 200;
+        // bg.height = 200;
+        // bg.shader = cloudshader;
+        // stage.addChild(bg);
+
         //Capture the keyboard arrow keys
         let left = keyboard(37);
         let up = keyboard(38);
@@ -162,7 +171,7 @@ function init() {
             this.color = color;
             this.chemtrailTank = 1000;
             this.speed = 1;
-            this.angle = 190;
+            this.angle = 180;
             this.position = initialPosition;
         }
         move(){
