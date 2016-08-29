@@ -1,0 +1,13 @@
+html {
+    color:#333;
+}
+
+body {
+    font-size: 1em;
+    line-height: 1.4;
+}
+
+canvas {
+    border:1px solid #ccc;
+    -webkit-font-smoothing: antialiased;
+}
