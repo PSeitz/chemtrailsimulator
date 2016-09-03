@@ -16,7 +16,7 @@
             var createjs = window;
         </script>
 
-        <script src="libs/pixi3.js"></script>
+        <script src="libs/pixi4.js"></script>
         <script src="libs/pixi-cocoontext.js"></script>
         <script src="libs/spriteUtilities.js"></script>
         <script src="libs/howler.min.js"></script>
@@ -27,6 +27,15 @@
         <script src="shaders.js"></script>
         <script src="keyboard.js"></script>
         <script src="graphics.js"></script>
+        <script id="shader" type="shader">
+
+        precision mediump float;
+        uniform float time;
+
+        void main(){
+           gl_FragColor = vec4(sin(time),gl_FragCoord.y/1000.0,1.0);
+        }
+        </script>
         <script src="helper.js"></script>
         <script src="sounds.js"></script>
         <script src="main.js"></script>

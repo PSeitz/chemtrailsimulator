@@ -121,14 +121,27 @@ function init() {
 
         }
 
-        // var shad = getCloudShader(200,200)
-        // var cloudshader = new PIXI.AbstractFilter(shad.fragmentSrc, shad.uniforms);
-        //
-        // var bg = PIXI.Sprite.fromImage("test_BG.jpg");
-        // bg.width = 200;
-        // bg.height = 200;
-        // bg.shader = cloudshader;
-        // stage.addChild(bg);
+        //Get shader code as a string
+        var shaderCode = document.getElementById("shader").innerHTML
+        var uniforms = {}
+        uniforms.time = {
+          type:"1f",
+          value:0.1
+        }
+
+        //Create our Pixi filter using our custom shader code
+        // var simpleShader = new PIXI.AbstractFilter('',shaderCode);
+        //Apply it to our object
+        // thePlane.sprite.filters = [simpleShader]
+
+        var shad = getCloudShader(200,200)
+        var cloudshader = new PIXI.Filter(shad.fragmentSrc2);
+
+        var bg = PIXI.Sprite.fromImage("test_BG.jpg");
+        bg.width = 200;
+        bg.height = 200;
+        bg.shader = cloudshader;
+        stage.addChild(bg);
 
         //Capture the keyboard arrow keys
         let left = keyboard(37);
