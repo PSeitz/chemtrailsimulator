@@ -37,145 +37,171 @@ function init() {
     canvas.width=width;
     canvas.height=height;
 
-    let stage = new PIXI.Container(0x66FF99, true);
-    let renderer = new PIXI.autoDetectRenderer(width, height, {
-        view: canvas, backgroundColor : 0x1099bb, antialias: true,
-        resolution: window.devicePixelRatio || 1,
-        autoResize:true});
+    let loader = PIXI.loader
+    loader
+		.add("cloud1", "img/cloud1_nice.png")
+		.add("cloud2", "img/cloud3_nice.png")
+        .add("cloud3", "img/cloud4_nice.png")
+        .load(abgehts);
 
-        PIXI.cocoontext.CONST.TEXT_RESOLUTION =  window.devicePixelRatio;
+    function abgehts(){
 
-        //full size
-        // canvas.width = window.innerWidth;
-        // canvas.height = window.innerHeight;
-        //
-        // window.addEventListener("resize", function(){
-        //     canvas.width = window.innerWidth;
-        //     canvas.height = window.innerHeight;
-        // });
+        let stage = new PIXI.Container(0x66FF99, true);
+        let renderer = new PIXI.autoDetectRenderer(width, height, {
+            view: canvas, backgroundColor : 0x1099bb, antialias: true,
+            resolution: window.devicePixelRatio || 1,
+            autoResize:true});
 
-        let thePlane = new Plane(getNextColor())
+            PIXI.cocoontext.CONST.TEXT_RESOLUTION =  window.devicePixelRatio;
 
-        let NUM_PERSONS = 10;
-        //Create Cells
-        let persons = []
-        for (let i = 0; i < NUM_PERSONS; i++) {
-            let person = new Person(faker.name.findName(),  getNextColor());
-            person.position = {
-                x: _.random(0, width), y:height
-            }
-            persons.push(person);
-        }
+            //full size
+            // canvas.width = window.innerWidth;
+            // canvas.height = window.innerHeight;
+            //
+            // window.addEventListener("resize", function(){
+            //     canvas.width = window.innerWidth;
+            //     canvas.height = window.innerHeight;
+            // });
 
+            let thePlane = new Plane(getNextColor())
 
-        thePlane.position = { x: 0, y:height/3 }
-        let planerDrawer = new PIXI.Graphics();
-        planerDrawer.beginFill(thePlane.color);
-        planerDrawer.drawRect(0,0, 35, 10);
-        planerDrawer.endFill();
-
-        let texture = planerDrawer.generateTexture();
-        thePlane.sprite = new PIXI.Sprite(texture);
-        setXYFrom(thePlane.sprite, thePlane.position)
-        stage.addChild(thePlane.sprite);
-
-        // let graphics2 = new PIXI.Graphics();
-        // graphics2.beginFill(0xe84e40);
-        // graphics2.drawRect(0, 0, 10, 20);
-        // graphics2.endFill();
-        // let texture = graphics2.generateTexture();
-        // let sprite = new PIXI.Sprite(texture);
-        // sprite.x = 100;
-        // sprite.y = 100;
-        // stage.addChild(sprite);
-
-        PIXI.cocoontext.CONST.TEXT_RESOLUTION =  window.devicePixelRatio;
-
-        addSprites(persons);
-        function addSprites(persons) {
-
-            for (let person of persons) {
-                let container = new PIXI.DisplayObjectContainer();
-                person.container = container;
-                stage.addChild(container);
-
-                let graphics = new PIXI.Graphics();
-                drawPerson(graphics, person.color, person.position);
-
-                let texture = graphics.generateTexture();
-                person.sprite = new PIXI.Sprite(texture);
-                person.sprite.interactive = false;
-
-                setXY(person.sprite.anchor, 0.5);
-                container.addChild(person.sprite);
-
-                setXYFrom(person.container, person.position)
-
-                person.text = new PIXI.cocoontext.CocoonText(person.name ,{font : '10px Arial', align : 'center', fill:"white"});
-                setXY(person.text.anchor, 0.5);
-                person.text.canvas.style.webkitFontSmoothing = "antialiased";
-                container.addChild(person.text);
-                person.text.y = - 20 -  _.random(0, 80);
-
+            let NUM_PERSONS = 10;
+            //Create Cells
+            let persons = []
+            for (let i = 0; i < NUM_PERSONS; i++) {
+                let person = new Person(faker.name.findName(),  getNextColor());
+                person.position = {
+                    x: _.random(0, width), y:height
+                }
+                persons.push(person);
             }
 
-        }
 
-        //Get shader code as a string
-        var shaderCode = document.getElementById("shader").innerHTML
-        var uniforms = {}
-        uniforms.time = {
-          type:"1f",
-          value:0.1
-        }
+            thePlane.position = { x: 0, y:height/3 }
+            let planerDrawer = new PIXI.Graphics();
+            planerDrawer.beginFill(thePlane.color);
+            planerDrawer.drawRect(0,0, 35, 10);
+            planerDrawer.endFill();
 
-        //Create our Pixi filter using our custom shader code
-        // var simpleShader = new PIXI.AbstractFilter('',shaderCode);
-        //Apply it to our object
-        // thePlane.sprite.filters = [simpleShader]
+            let texture = planerDrawer.generateTexture();
+            thePlane.sprite = new PIXI.Sprite(texture)
+            setXYFrom(thePlane.sprite, thePlane.position)
+            stage.addChild(thePlane.sprite);
 
-        var shad = getCloudShader(200,200)
-        var cloudshader = new PIXI.Filter(shad.fragmentSrc2);
+            // let graphics2 = new PIXI.Graphics();
+            // graphics2.beginFill(0xe84e40);
+            // graphics2.drawRect(0, 0, 10, 20);
+            // graphics2.endFill();
+            // let texture = graphics2.generateTexture();
+            // let sprite = new PIXI.Sprite(texture);
+            // sprite.x = 100;
+            // sprite.y = 100;
+            // stage.addChild(sprite);
 
-        var bg = PIXI.Sprite.fromImage("test_BG.jpg");
-        bg.width = 200;
-        bg.height = 200;
-        bg.shader = cloudshader;
-        stage.addChild(bg);
+            PIXI.cocoontext.CONST.TEXT_RESOLUTION =  window.devicePixelRatio;
 
-        //Capture the keyboard arrow keys
-        let left = keyboard(37);
-        let up = keyboard(38);
-        let right = keyboard(39);
-        let down = keyboard(40);
+            addSprites(persons);
+            function addSprites(persons) {
 
+                for (let person of persons) {
+                    let container = new PIXI.DisplayObjectContainer();
+                    person.container = container;
+                    stage.addChild(container);
 
-        let leftPressed = false, rightPressed = false;
+                    let graphics = new PIXI.Graphics();
+                    drawPerson(graphics, person.color, person.position);
 
-        right.press = () => {rightPressed = true;}
-        left.press = () => {leftPressed = true;}
+                    let texture = graphics.generateTexture();
+                    person.sprite = new PIXI.Sprite(texture);
+                    person.sprite.interactive = false;
 
-        right.release = () => {rightPressed = false;}
-        left.release = () => {leftPressed = false;}
+                    setXY(person.sprite.anchor, 0.5);
+                    container.addChild(person.sprite);
 
+                    setXYFrom(person.container, person.position)
 
-        // start animating
-        animate();
-        function animate(time) {
-            requestAnimationFrame(animate);
+                    person.text = new PIXI.cocoontext.CocoonText(person.name ,{font : '10px Arial', align : 'center', fill:"white"});
+                    setXY(person.text.anchor, 0.5);
+                    person.text.canvas.style.webkitFontSmoothing = "antialiased";
+                    container.addChild(person.text);
+                    person.text.y = - 20 -  _.random(0, 80);
 
-            thePlane.sprite.rotation =  degreesToRadians(thePlane.angle)
-            if (leftPressed) {
-                thePlane.angle -= 0.5;
+                }
+
             }
-            if (rightPressed) {
-                thePlane.angle += 0.5;
+
+            //Get shader code as a string
+            var shaderCode = document.getElementById("shader").innerHTML
+            var uniforms = {}
+            uniforms.time = {
+              type:"1f",
+              value:0.1
             }
-            thePlane.move();
+
+            //Create our Pixi filter using our custom shader code
+            // var simpleShader = new PIXI.AbstractFilter('',shaderCode);
+            //Apply it to our object
+            // thePlane.sprite.filters = [simpleShader]
+
+            // var shad = getCloudShader(200,200)
+            // var cloudshader = new PIXI.Filter(shad.fragmentSrc2);
+            //
+            // var bg = PIXI.Sprite.fromImage("test_BG.jpg");
+            // bg.width = 200;
+            // bg.height = 200;
+            // bg.shader = cloudshader;
+            // stage.addChild(bg);
+
+            //Capture the keyboard arrow keys
+            let left = keyboard(37);
+            let up = keyboard(38);
+            let right = keyboard(39);
+            let down = keyboard(40);
+            let space = keyboard(32);
+
+            let leftPressed = false, rightPressed = false;
+
+            right.press = () => {rightPressed = true;}
+            left.press = () => {leftPressed = true;}
+
+            right.release = () => {rightPressed = false;}
+            left.release = () => {leftPressed = false;}
+
+            let clouds = []
+
+            space.press = () => {
+                let cloudSprite = new PIXI.Sprite(loader.resources.cloud3 .texture)
+                cloudSprite.scale = new PIXI.Point(0.1, 0.1)
+                cloudSprite.anchor.x = 0.5
+                stage.addChild(cloudSprite);
+                setXYFrom(cloudSprite, thePlane.sprite)
+                clouds.push(cloudSprite)
+            }
+
+
+            // start animating
+            animate();
+            function animate(time) {
+                requestAnimationFrame(animate);
+
+                thePlane.sprite.rotation =  degreesToRadians(thePlane.angle)
+                if (leftPressed) {
+                    thePlane.angle -= 0.5;
+                }
+                if (rightPressed) {
+                    thePlane.angle += 0.5;
+                }
+                thePlane.move();
+                for (cloud of clouds) {
+                    cloud.y +=.1
+                }
+
+                renderer.render(stage)
+            }
+
             renderer.render(stage)
-        }
 
-        renderer.render(stage)
+        }
 
 }
 
