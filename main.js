@@ -40,7 +40,6 @@ function init() {
     let loader = PIXI.loader
     loader
 		.add("cloud1", "img/cloud1_nice.png")
-		.add("cloud2", "img/cloud3_nice.png")
         .add("cloud3", "img/cloud4_nice.png")
         .load(abgehts);
 
@@ -77,14 +76,16 @@ function init() {
             }
 
 
-            thePlane.position = { x: 0, y:height/3 }
+            thePlane.position = { x: 100, y:height/3 }
             let planerDrawer = new PIXI.Graphics();
             planerDrawer.beginFill(thePlane.color);
-            planerDrawer.drawRect(0,0, 35, 10);
+            planerDrawer.drawRect(0,0, 35, 15);
             planerDrawer.endFill();
 
             let texture = planerDrawer.generateTexture();
             thePlane.sprite = new PIXI.Sprite(texture)
+            setXY(thePlane.sprite.anchor, 0.5);
+            thePlane.sprite.anchor.x=0.3
             setXYFrom(thePlane.sprite, thePlane.position)
             stage.addChild(thePlane.sprite);
 
@@ -164,29 +165,113 @@ function init() {
 
             let clouds = []
 
-            space.press = () => {
-                let cloudSprite = new PIXI.Sprite(loader.resources.cloud3 .texture)
-                cloudSprite.scale = new PIXI.Point(0.1, 0.1)
-                cloudSprite.anchor.x = 0.5
-                stage.addChild(cloudSprite);
-                setXYFrom(cloudSprite, thePlane.sprite)
-                clouds.push(cloudSprite)
-            }
+            // space.press = () => {
+            //     let cloudSprite = new PIXI.Sprite(loader.resources.cloud3 .texture)
+            //     cloudSprite.scale = new PIXI.Point(0.1, 0.1)
+            //     cloudSprite.anchor.x = 0.5
+            //     stage.addChild(cloudSprite);
+            //     setXYFrom(cloudSprite, thePlane.sprite)
+            //     clouds.push(cloudSprite)
+            // }
+
+            // Create a new emitter
+            var emitter = new PIXI.particles.Emitter(
+
+                // The PIXI.Container to put the emitter in
+                // if using blend modes, it's important to put this
+                // on top of a bitmap, and not use the root stage Container
+                stage,
+                // The collection of particle images to use
+                [PIXI.Texture.fromImage('img/smokeparticle.png')],
+
+                // Emitter configuration, edit this to change the look
+                // of the emitter
+                {
+                 "alpha": {
+                  "start": 1,
+                  "end": 0
+                 },
+                 "scale": {
+                  "start": 0.1,
+                  "end": .4,
+                  "minimumScaleMultiplier": 1
+                 },
+                 "color": {
+                  "start": "#a1ada5",
+                  "end": "#49802f"
+                 },
+                 "speed": {
+                  "start": 0.05,
+                  "end": 0.05
+                 },
+                 "acceleration": {
+                  "x": 0,
+                  "y": 20
+                 },
+                 "startRotation": {
+                  "min": 190,
+                  "max": 350
+                 },
+                 "noRotation": false,
+                 "rotationSpeed": {
+                  "min": 100,
+                  "max": 100
+                 },
+                 "lifetime": {
+                  "min": 10.7,
+                  "max": 11.5
+                 },
+                 "blendMode": "overlay",
+                 "frequency": 0.01,
+                 "emitterLifetime": -1,
+                 "maxParticles": 5000,
+                 "pos": {
+                  "x": 50,
+                  "y": 50
+                 },
+                 "addAtBack": true,
+                 "spawnType": "circle",
+                 "spawnCircle": {
+                  "x": 0,
+                  "y": 0,
+                  "r": 0
+                 }
+                }
+            );
+
+
 
             let chemtrails = new Chemtrails()
+
+
+            var elapsed = Date.now();
+
+            // Start emitting
+            emitter.emit = true;
+
+
             // start animating
             animate();
             function animate(time) {
                 requestAnimationFrame(animate);
 
+                var now = Date.now();
+                // The emitter requires the elapsed
+                // number of seconds since the last update
+                emitter.update((now - elapsed) * 0.001);
+                emitter.updateSpawnPos(thePlane.position.x, thePlane.position.y);
+                elapsed = now;
+
                 thePlane.sprite.rotation =  degreesToRadians(thePlane.angle)
                 if (left.isDown) {
-                    thePlane.angle -= 0.5;
+                    thePlane.angle -= thePlane.rotationSpeed;
                 }
                 if (right.isDown) {
-                    thePlane.angle += 0.5;
-                }
+                    thePlane.angle += thePlane.rotationSpeed;
+                  }
                 if (space.isDown) {
+                    // let chempos = _.clone(thePlane.position)
+                    // chempos.x -= 20
                     chemtrails.addPos(thePlane.position)
                 }
                 thePlane.move();
@@ -234,19 +319,17 @@ function init() {
         }
         draw(stage){
             if(this.positions.length < 2) return
-            var line = new PIXI.Graphics();
+            stage.removeChild(this.line);
+            this.line = new PIXI.Graphics();
+            let line =this.line
 
             // begin a green fill..
             // line.beginFill(0x00FF00);
-            line.lineStyle(1, 0x888888, 1);
+            line.lineStyle(5, 0x888888, 1);
             // draw a triangle using lines
             line.moveTo(this.positions[0].x,this.positions[0].y);
             for (var i = 1; i < this.positions.length; i++) {
                 line.lineTo(this.positions[i].x,this.positions[i].y);
-                if (i>3) {
-                    // line.moveTo(this.positions[i-3].x,this.positions[i-3].y);
-                }
-
             }
             // end the fill
             line.endFill();
@@ -269,6 +352,7 @@ function init() {
             this.speed = 1;
             this.angle = 180;
             this.position = initialPosition;
+            this.rotationSpeed = 0.5;
         }
         move(){
             this.position = moveTowardsAngle(this.position, degreesToRadians(this.angle), this.speed);
