@@ -173,10 +173,6 @@ function init() {
                 clouds.push(cloudSprite)
             }
 
-            space.release = () => {
-
-            }
-
             let chemtrails = new Chemtrails()
             // start animating
             animate();
@@ -238,21 +234,25 @@ function init() {
         }
         draw(stage){
             if(this.positions.length < 2) return
-            var graphics = new PIXI.Graphics();
+            var line = new PIXI.Graphics();
 
             // begin a green fill..
-            graphics.beginFill(0x00FF00);
-
+            // line.beginFill(0x00FF00);
+            line.lineStyle(1, 0x888888, 1);
             // draw a triangle using lines
-            graphics.moveTo(this.positions[0].x,this.positions[0].y);
+            line.moveTo(this.positions[0].x,this.positions[0].y);
             for (var i = 1; i < this.positions.length; i++) {
-                graphics.lineTo(this.positions[i].x,this.positions[i].y);
+                line.lineTo(this.positions[i].x,this.positions[i].y);
+                if (i>3) {
+                    // line.moveTo(this.positions[i-3].x,this.positions[i-3].y);
+                }
+
             }
             // end the fill
-            graphics.endFill();
+            line.endFill();
 
             // add it the stage so we see it on our screens..
-            stage.addChild(graphics);
+            stage.addChild(line);
         }
     }
 
