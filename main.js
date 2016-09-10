@@ -100,8 +100,8 @@ function init() {
 
             PIXI.cocoontext.CONST.TEXT_RESOLUTION =  window.devicePixelRatio;
 
-            addSprites(persons);
-            function addSprites(persons) {
+            addPersons(persons);
+            function addPersons(persons) {
 
                 for (let person of persons) {
                     let container = new PIXI.DisplayObjectContainer();
@@ -124,7 +124,7 @@ function init() {
                     setXY(person.text.anchor, 0.5);
                     person.text.canvas.style.webkitFontSmoothing = "antialiased";
                     container.addChild(person.text);
-                    person.text.y = - 20 -  _.random(0, 80);
+                    person.text.y = - 20 - _.random(0, 80);
 
                 }
 
@@ -152,6 +152,8 @@ function init() {
             // bg.shader = cloudshader;
             // stage.addChild(bg);
 
+
+
             //Capture the keyboard arrow keys
             let left = keyboard(37);
             let up = keyboard(38);
@@ -159,13 +161,6 @@ function init() {
             let down = keyboard(40);
             let space = keyboard(32);
 
-            let leftPressed = false, rightPressed = false;
-
-            right.press = () => {rightPressed = true;}
-            left.press = () => {leftPressed = true;}
-
-            right.release = () => {rightPressed = false;}
-            left.release = () => {leftPressed = false;}
 
             let clouds = []
 
@@ -178,23 +173,32 @@ function init() {
                 clouds.push(cloudSprite)
             }
 
+            space.release = () => {
 
+            }
+
+            let chemtrails = new Chemtrails()
             // start animating
             animate();
             function animate(time) {
                 requestAnimationFrame(animate);
 
                 thePlane.sprite.rotation =  degreesToRadians(thePlane.angle)
-                if (leftPressed) {
+                if (left.isDown) {
                     thePlane.angle -= 0.5;
                 }
-                if (rightPressed) {
+                if (right.isDown) {
                     thePlane.angle += 0.5;
+                }
+                if (space.isDown) {
+                    chemtrails.addPos(thePlane.position)
                 }
                 thePlane.move();
                 for (cloud of clouds) {
                     cloud.y +=.1
                 }
+                chemtrails.descend();
+                chemtrails.draw(stage);
 
                 renderer.render(stage)
             }
@@ -204,6 +208,59 @@ function init() {
         }
 
 }
+
+    class Key {
+        constructor(keycode) {
+            let keyCallBack = keyboard(keycode);
+            this.pressed = false
+            keyCallBack.press = () => {this.pressed = true;}
+            keyCallBack.release = () => {this.pressed = false;}
+        }
+    }
+    class Chemtrails {
+        constructor(color) {
+            this.color = color;
+            this.positions = []
+            this.descendSpeed = .1
+            this.lastPos;
+        }
+        descend(){
+            for (var i = 0; i < this.positions.length; i++) {
+                this.positions[i].y += this.descendSpeed
+            }
+        }
+
+        addPos(pos){
+            if (!this.lastPos || lineDistance( this.lastPos, pos ) > 5) {
+                this.positions.push(pos)
+                this.lastPos = pos
+            }
+        }
+        draw(stage){
+            if(this.positions.length < 2) return
+            var graphics = new PIXI.Graphics();
+
+            // begin a green fill..
+            graphics.beginFill(0x00FF00);
+
+            // draw a triangle using lines
+            graphics.moveTo(this.positions[0].x,this.positions[0].y);
+            for (var i = 1; i < this.positions.length; i++) {
+                graphics.lineTo(this.positions[i].x,this.positions[i].y);
+            }
+            // end the fill
+            graphics.endFill();
+
+            // add it the stage so we see it on our screens..
+            stage.addChild(graphics);
+        }
+    }
+
+
+    function lineDistance( point1, point2 )
+    {
+        return Math.hypot(point2.x-point1.x, point2.y-point1.y)
+    }
 
     class Plane {
         constructor(color, initialPosition) {
