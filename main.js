@@ -243,10 +243,6 @@ function init() {
             line.moveTo(this.positions[0].x,this.positions[0].y);
             for (var i = 1; i < this.positions.length; i++) {
                 line.lineTo(this.positions[i].x,this.positions[i].y);
-                if (i>3) {
-                    // line.moveTo(this.positions[i-3].x,this.positions[i-3].y);
-                }
-
             }
             // end the fill
             line.endFill();
