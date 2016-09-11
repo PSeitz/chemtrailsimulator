@@ -27,6 +27,19 @@ let filter = PIXI.filters || PIXI.Filter;
 
 let game = {};
 
+function pluck(array, property){
+    let newArr = []
+    let props = property.split('.')
+    for (el of array) {
+        let pluckedObj = el;
+        for (prop of props) {
+            pluckedObj = pluckedObj[prop]
+        }
+        newArr.push(pluckedObj)
+    }
+    return newArr
+}
+
 
 function init() {
 
@@ -67,10 +80,35 @@ function init() {
             let NUM_PERSONS = 10;
             //Create Cells
             let persons = []
+
+            function randomPointWithMinDistance(minDistance, otherXs){
+                let x, nearestNeighbour;
+                for (let i = 0; i < 1000; i++) {
+                    x =  _.random(0, width)
+                    if (otherXs.length === 0) {
+                        return x;
+                    }
+
+                    for (otherX of otherXs) {
+                        let distance = Math.abs(otherX - x)
+                        if (nearestNeighbour == undefined || distance < nearestNeighbour) {
+                            nearestNeighbour = distance
+                        }
+                    }
+                    if (nearestNeighbour > minDistance) {
+                        break;
+                    }
+                }
+
+                return x
+            }
+
             for (let i = 0; i < NUM_PERSONS; i++) {
                 let person = new Person(faker.name.findName(),  getNextColor());
+                let allXs = pluck(persons, 'position.x')
+
                 person.position = {
-                    x: _.random(0, width), y:height
+                    x: randomPointWithMinDistance(5, allXs), y:height
                 }
                 persons.push(person);
             }
@@ -131,23 +169,35 @@ function init() {
 
             }
 
+            let tankText = addTankDisplay()
+            function addTankDisplay(){
+                let tankText = new PIXI.cocoontext.CocoonText(thePlane.chemtrailTank ,{font : '16px Arial', align : 'center', fill:"white"});
+                // setXY(tankText.anchor, 0.5);
+                tankText.canvas.style.webkitFontSmoothing = "antialiased";
+                stage.addChild(tankText);
+                tankText.y = 20;
+                tankText.x = 20
+                return tankText
+            }
+
+
             //Get shader code as a string
-            var shaderCode = document.getElementById("shader").innerHTML
-            var uniforms = {}
+            let shaderCode = document.getElementById("shader").innerHTML
+            let uniforms = {}
             uniforms.time = {
               type:"1f",
               value:0.1
             }
 
             //Create our Pixi filter using our custom shader code
-            // var simpleShader = new PIXI.AbstractFilter('',shaderCode);
+            // let simpleShader = new PIXI.AbstractFilter('',shaderCode);
             //Apply it to our object
             // thePlane.sprite.filters = [simpleShader]
 
-            // var shad = getCloudShader(200,200)
-            // var cloudshader = new PIXI.Filter(shad.fragmentSrc2);
+            // let shad = getCloudShader(200,200)
+            // let cloudshader = new PIXI.Filter(shad.fragmentSrc2);
             //
-            // var bg = PIXI.Sprite.fromImage("test_BG.jpg");
+            // let bg = PIXI.Sprite.fromImage("test_BG.jpg");
             // bg.width = 200;
             // bg.height = 200;
             // bg.shader = cloudshader;
@@ -162,7 +212,6 @@ function init() {
             let down = keyboard(40);
             let space = keyboard(32);
 
-
             let clouds = []
 
             // space.press = () => {
@@ -174,112 +223,46 @@ function init() {
             //     clouds.push(cloudSprite)
             // }
 
-            // Create a new emitter
-            var emitter = new PIXI.particles.Emitter(
-
-                // The PIXI.Container to put the emitter in
-                // if using blend modes, it's important to put this
-                // on top of a bitmap, and not use the root stage Container
-                stage,
-                // The collection of particle images to use
-                [PIXI.Texture.fromImage('img/smokeparticle.png')],
-
-                // Emitter configuration, edit this to change the look
-                // of the emitter
-                {
-                 "alpha": {
-                  "start": 1,
-                  "end": 0
-                 },
-                 "scale": {
-                  "start": 0.1,
-                  "end": .4,
-                  "minimumScaleMultiplier": 1
-                 },
-                 "color": {
-                  "start": "#a1ada5",
-                  "end": "#49802f"
-                 },
-                 "speed": {
-                  "start": 0.05,
-                  "end": 0.05
-                 },
-                 "acceleration": {
-                  "x": 0,
-                  "y": 20
-                 },
-                 "startRotation": {
-                  "min": 190,
-                  "max": 350
-                 },
-                 "noRotation": false,
-                 "rotationSpeed": {
-                  "min": 100,
-                  "max": 100
-                 },
-                 "lifetime": {
-                  "min": 10.7,
-                  "max": 11.5
-                 },
-                 "blendMode": "overlay",
-                 "frequency": 0.01,
-                 "emitterLifetime": -1,
-                 "maxParticles": 5000,
-                 "pos": {
-                  "x": 50,
-                  "y": 50
-                 },
-                 "addAtBack": true,
-                 "spawnType": "circle",
-                 "spawnCircle": {
-                  "x": 0,
-                  "y": 0,
-                  "r": 0
-                 }
-                }
-            );
 
 
+            let elapsed = Date.now();
 
-            let chemtrails = new Chemtrails()
-
-
-            var elapsed = Date.now();
-
-            // Start emitting
-            emitter.emit = true;
-
+            // space.press = () => {
+            //     emitter.emit = true;
+            // }
+            //
+            space.release = () => {
+                thePlane.chemtrails.completeLine()
+            }
 
             // start animating
+            let start = performance.now();
+
+            // *** ANIMATE
             animate();
-            function animate(time) {
+            function animate(timestamp) {
                 requestAnimationFrame(animate);
+                let delta = (timestamp - start) / 10;
+                start = timestamp;
 
-                var now = Date.now();
-                // The emitter requires the elapsed
-                // number of seconds since the last update
-                emitter.update((now - elapsed) * 0.001);
-                emitter.updateSpawnPos(thePlane.position.x, thePlane.position.y);
-                elapsed = now;
+                tankText.text = Math.round(thePlane.chemtrailTank)
 
-                thePlane.sprite.rotation =  degreesToRadians(thePlane.angle)
+                thePlane.sprite.rotation = degreesToRadians(thePlane.angle)
                 if (left.isDown) {
-                    thePlane.angle -= thePlane.rotationSpeed;
+                    thePlane.angle -= thePlane.rotationSpeed * delta;
                 }
                 if (right.isDown) {
-                    thePlane.angle += thePlane.rotationSpeed;
+                    thePlane.angle += thePlane.rotationSpeed * delta;
                   }
                 if (space.isDown) {
-                    // let chempos = _.clone(thePlane.position)
-                    // chempos.x -= 20
-                    chemtrails.addPos(thePlane.position)
+                    thePlane.spray(delta)
                 }
                 thePlane.move();
                 for (cloud of clouds) {
-                    cloud.y +=.1
+                    cloud.y += .1 * delta
                 }
-                chemtrails.descend();
-                chemtrails.draw(stage);
+                thePlane.chemtrails.descend(delta);
+                thePlane.chemtrails.draw(stage);
 
                 renderer.render(stage)
             }
@@ -304,13 +287,24 @@ function init() {
             this.positions = []
             this.descendSpeed = .1
             this.lastPos;
+            this.completeLines = []
         }
-        descend(){
-            for (var i = 0; i < this.positions.length; i++) {
-                this.positions[i].y += this.descendSpeed
+        descend(delta){
+            for (let i = 0; i < this.positions.length; i++) {
+                this.positions[i].y += this.descendSpeed * delta
+            }
+            for (let line of this.completeLines) {
+                line.position.y += this.descendSpeed * delta
             }
         }
 
+        completeLine(){
+            if (this.positions.length == 0)
+                return;
+            this.completeLines.push(this.line)
+            this.line = null;
+            this.positions = []
+        }
         addPos(pos){
             if (!this.lastPos || lineDistance( this.lastPos, pos ) > 5) {
                 this.positions.push(pos)
@@ -319,16 +313,16 @@ function init() {
         }
         draw(stage){
             if(this.positions.length < 2) return
-            stage.removeChild(this.line);
+
+            if (this.line) stage.removeChild(this.line)
+
             this.line = new PIXI.Graphics();
             let line =this.line
 
-            // begin a green fill..
-            // line.beginFill(0x00FF00);
             line.lineStyle(5, 0x888888, 1);
             // draw a triangle using lines
             line.moveTo(this.positions[0].x,this.positions[0].y);
-            for (var i = 1; i < this.positions.length; i++) {
+            for (let i = 1; i < this.positions.length; i++) {
                 line.lineTo(this.positions[i].x,this.positions[i].y);
             }
             // end the fill
@@ -347,8 +341,9 @@ function init() {
 
     class Plane {
         constructor(color, initialPosition) {
+            this.chemtrails = new Chemtrails()
             this.color = color;
-            this.chemtrailTank = 1000;
+            this.chemtrailTank = 300;
             this.speed = 1;
             this.angle = 180;
             this.position = initialPosition;
@@ -357,6 +352,14 @@ function init() {
         move(){
             this.position = moveTowardsAngle(this.position, degreesToRadians(this.angle), this.speed);
             setXYFrom(this.sprite.position, this.position)
+        }
+        spray(delta){
+            this.chemtrailTank -= (1 * delta);
+            // this.chemtrailTank = 
+            if (this.chemtrailTank < 0) {
+                return;
+            }
+            this.chemtrails.addPos(this.position)
         }
     }
 
