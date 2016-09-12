@@ -25,8 +25,6 @@ function getNext(collection, name){
 
 let filter = PIXI.filters || PIXI.Filter;
 
-let game = {};
-
 function pluck(array, property){
     let newArr = []
     let props = property.split('.')
@@ -40,11 +38,18 @@ function pluck(array, property){
     return newArr
 }
 
+class Game {
+    constructor(money) {
+        this.money = money;
+    }
+}
+
+let game = new Game(0)
+let width = 800;
+let height = 600;
 
 function init() {
 
-    let width = 800;
-    let height = 600;
     let canvas = document.getElementById("stage");
 
     canvas.width=width;
@@ -114,7 +119,7 @@ function init() {
             }
 
 
-            thePlane.position = { x: 100, y:height/3 }
+            thePlane.position = { x: 100, y:height / 3 }
             let planerDrawer = new PIXI.Graphics();
             planerDrawer.beginFill(thePlane.color);
             planerDrawer.drawRect(0,0, 35, 15);
@@ -127,15 +132,6 @@ function init() {
             setXYFrom(thePlane.sprite, thePlane.position)
             stage.addChild(thePlane.sprite);
 
-            // let graphics2 = new PIXI.Graphics();
-            // graphics2.beginFill(0xe84e40);
-            // graphics2.drawRect(0, 0, 10, 20);
-            // graphics2.endFill();
-            // let texture = graphics2.generateTexture();
-            // let sprite = new PIXI.Sprite(texture);
-            // sprite.x = 100;
-            // sprite.y = 100;
-            // stage.addChild(sprite);
 
             PIXI.cocoontext.CONST.TEXT_RESOLUTION =  window.devicePixelRatio;
 
@@ -169,39 +165,28 @@ function init() {
 
             }
 
-            let tankText = addTankDisplay()
-            function addTankDisplay(){
-                let tankText = new PIXI.cocoontext.CocoonText(thePlane.chemtrailTank ,{font : '16px Arial', align : 'center', fill:"white"});
-                // setXY(tankText.anchor, 0.5);
-                tankText.canvas.style.webkitFontSmoothing = "antialiased";
-                stage.addChild(tankText);
-                tankText.y = 20;
-                tankText.x = 20
-                return tankText
-            }
 
+            function addUIText(text){
+                let uitext = new PIXI.cocoontext.CocoonText( text,{font : '16px Arial', align : 'center', fill:"white"});
+                // setXY(uitext.anchor, 0.5);
+                uitext.canvas.style.webkitFontSmoothing = "antialiased";
+                stage.addChild(uitext);
+                uitext.y = 20;
+                return uitext
+            }
+            let tankText = addUIText(thePlane.chemtrailTank)
+            tankText.x = 20
+            let moneyText = addUIText(game.money)
+            moneyText.x = width - 20
+            moneyText.anchor.x = 1
 
             //Get shader code as a string
             let shaderCode = document.getElementById("shader").innerHTML
             let uniforms = {}
             uniforms.time = {
-              type:"1f",
-              value:0.1
+                type:"1f",
+                value:0.1
             }
-
-            //Create our Pixi filter using our custom shader code
-            // let simpleShader = new PIXI.AbstractFilter('',shaderCode);
-            //Apply it to our object
-            // thePlane.sprite.filters = [simpleShader]
-
-            // let shad = getCloudShader(200,200)
-            // let cloudshader = new PIXI.Filter(shad.fragmentSrc2);
-            //
-            // let bg = PIXI.Sprite.fromImage("test_BG.jpg");
-            // bg.width = 200;
-            // bg.height = 200;
-            // bg.shader = cloudshader;
-            // stage.addChild(bg);
 
 
 
@@ -214,23 +199,9 @@ function init() {
 
             let clouds = []
 
-            // space.press = () => {
-            //     let cloudSprite = new PIXI.Sprite(loader.resources.cloud3 .texture)
-            //     cloudSprite.scale = new PIXI.Point(0.1, 0.1)
-            //     cloudSprite.anchor.x = 0.5
-            //     stage.addChild(cloudSprite);
-            //     setXYFrom(cloudSprite, thePlane.sprite)
-            //     clouds.push(cloudSprite)
-            // }
-
-
 
             let elapsed = Date.now();
 
-            // space.press = () => {
-            //     emitter.emit = true;
-            // }
-            //
             space.release = () => {
                 thePlane.chemtrails.completeLine()
             }
@@ -245,8 +216,8 @@ function init() {
                 let delta = (timestamp - start) / 10;
                 start = timestamp;
 
-                tankText.text = Math.round(thePlane.chemtrailTank)
-
+                tankText.text = "Chemtrailtank: "+Math.round(thePlane.chemtrailTank)
+                moneyText.text = "Moneten: "+Math.round(game.money)
                 thePlane.sprite.rotation = degreesToRadians(thePlane.angle)
                 if (left.isDown) {
                     thePlane.angle -= thePlane.rotationSpeed * delta;
@@ -264,6 +235,10 @@ function init() {
                 thePlane.chemtrails.descend(delta);
                 thePlane.chemtrails.draw(stage);
 
+                let lines = thePlane.chemtrails.hitsGround()
+                if (lines.length > 0) {
+                    game.money+= height - lines[0].startHeight
+                }
                 renderer.render(stage)
             }
 
@@ -281,6 +256,55 @@ function init() {
             keyCallBack.release = () => {this.pressed = false;}
         }
     }
+    class ChemtrailLine {
+        constructor(startPos, descendSpeed){
+            this.startHeight = startPos.y // height ratio
+            this.descendation = 0;
+            this.descendSpeed = descendSpeed
+            this.positions = []
+            this.positions.push(startPos)
+            this.completed = false
+        }
+        addPos(pos){
+            if (lineDistance( _.last(this.positions), pos ) > 1) {
+                this.positions.push(pos)
+            }
+        }
+        completeLine(){
+            this.completed = true;
+            this.positions = []
+        }
+        descend(delta){
+            if (this.completed == false) {
+                for (let i = 0; i < this.positions.length; i++) {
+                    this.positions[i].y += this.descendSpeed * delta
+                }
+            }else{
+                this.line.position.y += this.descendSpeed * delta
+            }
+            this.descendation += this.descendSpeed * delta
+        }
+        hitsGround(){
+            if (!this.line) return false; // TODO
+            return this.startHeight + this.descendation + 40 > height
+        }
+        draw(stage){
+            if(this.completed == true) return
+            if(this.positions.length < 2) return
+
+            if (this.line) stage.removeChild(this.line)
+
+            this.line = new PIXI.Graphics();
+
+            this.line.lineStyle(5, 0x88BB88, 1);
+            this.line.moveTo(this.positions[0].x,this.positions[0].y);
+            for (let i = 1; i < this.positions.length; i++) {
+                this.line.lineTo(this.positions[i].x,this.positions[i].y);
+            }
+            this.line.endFill();
+            stage.addChild(this.line);
+        }
+    }
     class Chemtrails {
         constructor(color) {
             this.color = color;
@@ -288,48 +312,37 @@ function init() {
             this.descendSpeed = .1
             this.lastPos;
             this.completeLines = []
+            this.chemtrailLines = []
+            this.currentLine = null;
+
         }
         descend(delta){
-            for (let i = 0; i < this.positions.length; i++) {
-                this.positions[i].y += this.descendSpeed * delta
+            for (let line of this.chemtrailLines) {
+                line.descend(delta)
             }
-            for (let line of this.completeLines) {
-                line.position.y += this.descendSpeed * delta
-            }
+        }
+        hitsGround(){
+            return _.remove(this.chemtrailLines, function(line) {
+              return line.hitsGround()
+            });
         }
 
         completeLine(){
-            if (this.positions.length == 0)
-                return;
-            this.completeLines.push(this.line)
-            this.line = null;
-            this.positions = []
+            this.currentLine.completeLine();
+            this.currentLine = null;
         }
         addPos(pos){
-            if (!this.lastPos || lineDistance( this.lastPos, pos ) > 5) {
-                this.positions.push(pos)
-                this.lastPos = pos
+            if (!this.currentLine) {
+                this.currentLine = new ChemtrailLine(pos, this.descendSpeed)
+                this.chemtrailLines.push(this.currentLine)
+            }else{
+                this.currentLine.addPos(pos);
             }
         }
         draw(stage){
-            if(this.positions.length < 2) return
-
-            if (this.line) stage.removeChild(this.line)
-
-            this.line = new PIXI.Graphics();
-            let line =this.line
-
-            line.lineStyle(5, 0x888888, 1);
-            // draw a triangle using lines
-            line.moveTo(this.positions[0].x,this.positions[0].y);
-            for (let i = 1; i < this.positions.length; i++) {
-                line.lineTo(this.positions[i].x,this.positions[i].y);
+            for (let line of this.chemtrailLines) {
+                line.draw(stage)
             }
-            // end the fill
-            line.endFill();
-
-            // add it the stage so we see it on our screens..
-            stage.addChild(line);
         }
     }
 
@@ -354,11 +367,11 @@ function init() {
             setXYFrom(this.sprite.position, this.position)
         }
         spray(delta){
-            this.chemtrailTank -= (1 * delta);
-            // this.chemtrailTank = 
-            if (this.chemtrailTank < 0) {
+            if (this.chemtrailTank <= 0) {
                 return;
             }
+            this.chemtrailTank -= (1 * delta);
+            this.chemtrailTank = Math.max(0, this.chemtrailTank)
             this.chemtrails.addPos(this.position)
         }
     }
