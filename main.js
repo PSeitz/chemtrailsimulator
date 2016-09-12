@@ -25,13 +25,31 @@ function getNext(collection, name){
 
 let filter = PIXI.filters || PIXI.Filter;
 
-let game = {};
+function pluck(array, property){
+    let newArr = []
+    let props = property.split('.')
+    for (el of array) {
+        let pluckedObj = el;
+        for (prop of props) {
+            pluckedObj = pluckedObj[prop]
+        }
+        newArr.push(pluckedObj)
+    }
+    return newArr
+}
 
+class Game {
+    constructor(money) {
+        this.money = money;
+    }
+}
+
+let game = new Game(0)
+let width = 800;
+let height = 600;
 
 function init() {
 
-    let width = 800;
-    let height = 600;
     let canvas = document.getElementById("stage");
 
     canvas.width=width;
@@ -67,16 +85,41 @@ function init() {
             let NUM_PERSONS = 10;
             //Create Cells
             let persons = []
+
+            function randomPointWithMinDistance(minDistance, otherXs){
+                let x, nearestNeighbour;
+                for (let i = 0; i < 1000; i++) {
+                    x =  _.random(0, width)
+                    if (otherXs.length === 0) {
+                        return x;
+                    }
+
+                    for (otherX of otherXs) {
+                        let distance = Math.abs(otherX - x)
+                        if (nearestNeighbour == undefined || distance < nearestNeighbour) {
+                            nearestNeighbour = distance
+                        }
+                    }
+                    if (nearestNeighbour > minDistance) {
+                        break;
+                    }
+                }
+
+                return x
+            }
+
             for (let i = 0; i < NUM_PERSONS; i++) {
                 let person = new Person(faker.name.findName(),  getNextColor());
+                let allXs = pluck(persons, 'position.x')
+
                 person.position = {
-                    x: _.random(0, width), y:height
+                    x: randomPointWithMinDistance(5, allXs), y:height
                 }
                 persons.push(person);
             }
 
 
-            thePlane.position = { x: 100, y:height/3 }
+            thePlane.position = { x: 100, y:height / 3 }
             let planerDrawer = new PIXI.Graphics();
             planerDrawer.beginFill(thePlane.color);
             planerDrawer.drawRect(0,0, 35, 15);
@@ -89,15 +132,6 @@ function init() {
             setXYFrom(thePlane.sprite, thePlane.position)
             stage.addChild(thePlane.sprite);
 
-            // let graphics2 = new PIXI.Graphics();
-            // graphics2.beginFill(0xe84e40);
-            // graphics2.drawRect(0, 0, 10, 20);
-            // graphics2.endFill();
-            // let texture = graphics2.generateTexture();
-            // let sprite = new PIXI.Sprite(texture);
-            // sprite.x = 100;
-            // sprite.y = 100;
-            // stage.addChild(sprite);
 
             PIXI.cocoontext.CONST.TEXT_RESOLUTION =  window.devicePixelRatio;
 
@@ -131,27 +165,28 @@ function init() {
 
             }
 
-            //Get shader code as a string
-            var shaderCode = document.getElementById("shader").innerHTML
-            var uniforms = {}
-            uniforms.time = {
-              type:"1f",
-              value:0.1
+
+            function addUIText(text){
+                let uitext = new PIXI.cocoontext.CocoonText( text,{font : '16px Arial', align : 'center', fill:"white"});
+                // setXY(uitext.anchor, 0.5);
+                uitext.canvas.style.webkitFontSmoothing = "antialiased";
+                stage.addChild(uitext);
+                uitext.y = 20;
+                return uitext
             }
+            let tankText = addUIText(thePlane.chemtrailTank)
+            tankText.x = 20
+            let moneyText = addUIText(game.money)
+            moneyText.x = width - 20
+            moneyText.anchor.x = 1
 
-            //Create our Pixi filter using our custom shader code
-            // var simpleShader = new PIXI.AbstractFilter('',shaderCode);
-            //Apply it to our object
-            // thePlane.sprite.filters = [simpleShader]
-
-            // var shad = getCloudShader(200,200)
-            // var cloudshader = new PIXI.Filter(shad.fragmentSrc2);
-            //
-            // var bg = PIXI.Sprite.fromImage("test_BG.jpg");
-            // bg.width = 200;
-            // bg.height = 200;
-            // bg.shader = cloudshader;
-            // stage.addChild(bg);
+            //Get shader code as a string
+            let shaderCode = document.getElementById("shader").innerHTML
+            let uniforms = {}
+            uniforms.time = {
+                type:"1f",
+                value:0.1
+            }
 
 
 
@@ -162,125 +197,48 @@ function init() {
             let down = keyboard(40);
             let space = keyboard(32);
 
-
             let clouds = []
 
-            // space.press = () => {
-            //     let cloudSprite = new PIXI.Sprite(loader.resources.cloud3 .texture)
-            //     cloudSprite.scale = new PIXI.Point(0.1, 0.1)
-            //     cloudSprite.anchor.x = 0.5
-            //     stage.addChild(cloudSprite);
-            //     setXYFrom(cloudSprite, thePlane.sprite)
-            //     clouds.push(cloudSprite)
-            // }
 
-            // Create a new emitter
-            var emitter = new PIXI.particles.Emitter(
+            let elapsed = Date.now();
 
-                // The PIXI.Container to put the emitter in
-                // if using blend modes, it's important to put this
-                // on top of a bitmap, and not use the root stage Container
-                stage,
-                // The collection of particle images to use
-                [PIXI.Texture.fromImage('img/smokeparticle.png')],
-
-                // Emitter configuration, edit this to change the look
-                // of the emitter
-                {
-                 "alpha": {
-                  "start": 1,
-                  "end": 0
-                 },
-                 "scale": {
-                  "start": 0.1,
-                  "end": .4,
-                  "minimumScaleMultiplier": 1
-                 },
-                 "color": {
-                  "start": "#a1ada5",
-                  "end": "#49802f"
-                 },
-                 "speed": {
-                  "start": 0.05,
-                  "end": 0.05
-                 },
-                 "acceleration": {
-                  "x": 0,
-                  "y": 20
-                 },
-                 "startRotation": {
-                  "min": 190,
-                  "max": 350
-                 },
-                 "noRotation": false,
-                 "rotationSpeed": {
-                  "min": 100,
-                  "max": 100
-                 },
-                 "lifetime": {
-                  "min": 10.7,
-                  "max": 11.5
-                 },
-                 "blendMode": "overlay",
-                 "frequency": 0.01,
-                 "emitterLifetime": -1,
-                 "maxParticles": 5000,
-                 "pos": {
-                  "x": 50,
-                  "y": 50
-                 },
-                 "addAtBack": true,
-                 "spawnType": "circle",
-                 "spawnCircle": {
-                  "x": 0,
-                  "y": 0,
-                  "r": 0
-                 }
-                }
-            );
-
-
-
-            let chemtrails = new Chemtrails()
-
-
-            var elapsed = Date.now();
-
-            // Start emitting
-            emitter.emit = true;
-
+            space.release = () => {
+                thePlane.chemtrails.completeLine()
+            }
 
             // start animating
+            let start = performance.now();
+
+            // *** ANIMATE
             animate();
-            function animate(time) {
+            function animate(timestamp) {
                 requestAnimationFrame(animate);
+                let delta = (timestamp - start) / 10;
+                start = timestamp;
 
-                var now = Date.now();
-                // The emitter requires the elapsed
-                // number of seconds since the last update
-                emitter.update((now - elapsed) * 0.001);
-                emitter.updateSpawnPos(thePlane.position.x, thePlane.position.y);
-                elapsed = now;
-
-                thePlane.sprite.rotation =  degreesToRadians(thePlane.angle)
+                tankText.text = "Chemtrailtank: "+Math.round(thePlane.chemtrailTank)
+                moneyText.text = "Moneten: "+Math.round(game.money)
+                thePlane.sprite.rotation = degreesToRadians(thePlane.angle)
                 if (left.isDown) {
-                    thePlane.angle -= thePlane.rotationSpeed;
+                    thePlane.angle -= thePlane.rotationSpeed * delta;
                 }
                 if (right.isDown) {
-                    thePlane.angle += thePlane.rotationSpeed;
+                    thePlane.angle += thePlane.rotationSpeed * delta;
                   }
                 if (space.isDown) {
-                    // let chempos = _.clone(thePlane.position)
-                    // chempos.x -= 20
-                    chemtrails.addPos(thePlane.position)
+                    thePlane.spray(delta)
                 }
                 thePlane.move();
                 for (cloud of clouds) {
-                    cloud.y +=.1
+                    cloud.y += .1 * delta
                 }
-                chemtrails.descend();
-                chemtrails.draw(stage);
+                thePlane.chemtrails.descend(delta);
+                thePlane.chemtrails.draw(stage);
 
+                let lines = thePlane.chemtrails.hitsGround()
+                if (lines.length > 0) {
+                    game.money+= height - lines[0].startHeight
+                }
                 renderer.render(stage)
             }
 
@@ -298,44 +256,93 @@ function init() {
             keyCallBack.release = () => {this.pressed = false;}
         }
     }
+    class ChemtrailLine {
+        constructor(startPos, descendSpeed){
+            this.startHeight = startPos.y // height ratio
+            this.descendation = 0;
+            this.descendSpeed = descendSpeed
+            this.positions = []
+            this.positions.push(startPos)
+            this.completed = false
+        }
+        addPos(pos){
+            if (lineDistance( _.last(this.positions), pos ) > 1) {
+                this.positions.push(pos)
+            }
+        }
+        completeLine(){
+            this.completed = true;
+            this.positions = []
+        }
+        descend(delta){
+            if (this.completed == false) {
+                for (let i = 0; i < this.positions.length; i++) {
+                    this.positions[i].y += this.descendSpeed * delta
+                }
+            }else{
+                this.line.position.y += this.descendSpeed * delta
+            }
+            this.descendation += this.descendSpeed * delta
+        }
+        hitsGround(){
+            if (!this.line) return false; // TODO
+            return this.startHeight + this.descendation + 40 > height
+        }
+        draw(stage){
+            if(this.completed == true) return
+            if(this.positions.length < 2) return
+
+            if (this.line) stage.removeChild(this.line)
+
+            this.line = new PIXI.Graphics();
+
+            this.line.lineStyle(5, 0x88BB88, 1);
+            this.line.moveTo(this.positions[0].x,this.positions[0].y);
+            for (let i = 1; i < this.positions.length; i++) {
+                this.line.lineTo(this.positions[i].x,this.positions[i].y);
+            }
+            this.line.endFill();
+            stage.addChild(this.line);
+        }
+    }
     class Chemtrails {
         constructor(color) {
             this.color = color;
             this.positions = []
             this.descendSpeed = .1
             this.lastPos;
+            this.completeLines = []
+            this.chemtrailLines = []
+            this.currentLine = null;
+
         }
-        descend(){
-            for (var i = 0; i < this.positions.length; i++) {
-                this.positions[i].y += this.descendSpeed
+        descend(delta){
+            for (let line of this.chemtrailLines) {
+                line.descend(delta)
             }
         }
+        hitsGround(){
+            return _.remove(this.chemtrailLines, function(line) {
+              return line.hitsGround()
+            });
+        }
 
+        completeLine(){
+            this.currentLine.completeLine();
+            this.currentLine = null;
+        }
         addPos(pos){
-            if (!this.lastPos || lineDistance( this.lastPos, pos ) > 5) {
-                this.positions.push(pos)
-                this.lastPos = pos
+            if (!this.currentLine) {
+                this.currentLine = new ChemtrailLine(pos, this.descendSpeed)
+                this.chemtrailLines.push(this.currentLine)
+            }else{
+                this.currentLine.addPos(pos);
             }
         }
         draw(stage){
-            if(this.positions.length < 2) return
-            stage.removeChild(this.line);
-            this.line = new PIXI.Graphics();
-            let line =this.line
-
-            // begin a green fill..
-            // line.beginFill(0x00FF00);
-            line.lineStyle(5, 0x888888, 1);
-            // draw a triangle using lines
-            line.moveTo(this.positions[0].x,this.positions[0].y);
-            for (var i = 1; i < this.positions.length; i++) {
-                line.lineTo(this.positions[i].x,this.positions[i].y);
+            for (let line of this.chemtrailLines) {
+                line.draw(stage)
             }
-            // end the fill
-            line.endFill();
-
-            // add it the stage so we see it on our screens..
-            stage.addChild(line);
         }
     }
 
@@ -347,8 +354,9 @@ function init() {
 
     class Plane {
         constructor(color, initialPosition) {
+            this.chemtrails = new Chemtrails()
             this.color = color;
-            this.chemtrailTank = 1000;
+            this.chemtrailTank = 300;
             this.speed = 1;
             this.angle = 180;
             this.position = initialPosition;
@@ -357,6 +365,14 @@ function init() {
         move(){
             this.position = moveTowardsAngle(this.position, degreesToRadians(this.angle), this.speed);
             setXYFrom(this.sprite.position, this.position)
+        }
+        spray(delta){
+            if (this.chemtrailTank <= 0) {
+                return;
+            }
+            this.chemtrailTank -= (1 * delta);
+            this.chemtrailTank = Math.max(0, this.chemtrailTank)
+            this.chemtrails.addPos(this.position)
         }
     }
 

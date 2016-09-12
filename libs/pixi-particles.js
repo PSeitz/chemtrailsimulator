@@ -94,7 +94,7 @@ if(!Array.prototype.random)
 (function(PIXI, undefined) {
 
 	"use strict";
-	
+
 	var BLEND_MODES = PIXI.BLEND_MODES || PIXI.blendModes;
 	var Texture = PIXI.Texture;
 
@@ -106,7 +106,7 @@ if(!Array.prototype.random)
 	var ParticleUtils = {};
 
 	var DEG_TO_RADS = ParticleUtils.DEG_TO_RADS = Math.PI / 180;
-	
+
 	ParticleUtils.useAPI3 = false;
 	// avoid the string replacement of '"1.6.8"'
 	var version = PIXI["VER"+"SION"];// jshint ignore:line
@@ -114,7 +114,7 @@ if(!Array.prototype.random)
 	{
 		ParticleUtils.useAPI3 = true;
 	}
-	
+
 	var empty = ParticleUtils.EMPTY_TEXTURE = null;
 	if(ParticleUtils.useAPI3)
 	{
@@ -487,14 +487,14 @@ if(!Array.prototype.random)
 		 * @private
 		 */
 		this._oneOverLife = 0;
-		
+
 		/**
 		 * Reference to the next particle in the list.
 		 * @property {Particle} next
 		 * @private
 		 */
 		this.next = null;
-		
+
 		/**
 		 * Reference to the previous particle in the list.
 		 * @property {Particle} prev
@@ -661,8 +661,12 @@ if(!Array.prototype.random)
 			}
 			else if(this._doAcceleration)
 			{
-				this.velocity.x += this.acceleration.x * delta;
-				this.velocity.y += this.acceleration.y * delta;
+                    this.velocity.x += this.acceleration.x * delta;
+                if (this.velocity.y < this.maxVelocityY){
+                    console.log(this.velocity.y)
+                    this.velocity.y += this.acceleration.y * delta;
+                }
+
 			}
 			//adjust position based on velocity
 			this.position.x += this.velocity.x * delta;
@@ -712,7 +716,7 @@ if(!Array.prototype.random)
 		this.emitter = this.velocity = this.startColor = this.endColor = this.ease =
 			this.next = this.prev = null;
 	};
-	
+
 	/**
 	 * Checks over the art that was passed to the Emitter's init() function, to do any special
 	 * modifications to prepare it ahead of time.
@@ -746,10 +750,10 @@ if(!Array.prototype.random)
 				}
 			}
 		}
-		
+
 		return art;
 	};
-	
+
 	/**
 	 * Parses extra emitter data to ensure it is set up for this particle class.
 	 * Particle does nothing to the extra data.
@@ -1135,7 +1139,7 @@ if(!Array.prototype.random)
 	var p = Emitter.prototype = {};
 
 	var helperPoint = new PIXI.Point();
-	
+
 	/**
 	 * Time between particle spawns in seconds. If this value is not a number greater than 0,
 	 * it will be set to 1 (particle per second) to prevent infinite loops.
@@ -1219,12 +1223,12 @@ if(!Array.prototype.random)
 			return;
 		//clean up any existing particles
 		this.cleanup();
-		
+
 		//store the original config and particle images, in case we need to re-initialize
 		//when the particle constructor is changed
 		this._origConfig = config;
 		this._origArt = art;
-		
+
 		//set up the array of data, also ensuring that it is an array
 		art = Array.isArray(art) ? art.slice() : [art];
 		//run the art through the particle class's parsing function
@@ -1249,6 +1253,9 @@ if(!Array.prototype.random)
 		}
 		else
 			this.startSpeed = this.endSpeed = 0;
+        //set up max velocity
+        this.maxVelocityY = config.maxVelocityY || 0;
+        this.maxVelocityX = config.maxVelocityX || 0;
 		//set up acceleration
 		var acceleration = config.acceleration;
 		if(acceleration && (acceleration.x || acceleration.y))
@@ -1585,7 +1592,7 @@ if(!Array.prototype.random)
 						{
 							p = new this.particleConstructor(this);
 						}
-												
+
 						//set a random texture if we have more than one
 						if(this.particleImages.length > 1)
 						{
@@ -1604,6 +1611,8 @@ if(!Array.prototype.random)
 						p.endSpeed = this.endSpeed;
 						p.acceleration.x = this.acceleration.x;
 						p.acceleration.y = this.acceleration.y;
+                        p.maxVelocityX = this.maxVelocityX;
+						p.maxVelocityY = this.maxVelocityY;
 						if(this.minimumScaleMultiplier != 1)
 						{
 							var rand = Math.random() * (1 - this.minimumScaleMultiplier) + this.minimumScaleMultiplier;
@@ -1883,10 +1892,10 @@ if(!Array.prototype.random)
 }(PIXI));
 
 (function(undefined){
-	
+
 	// Check for window, fallback to global
 	var global = typeof window !== 'undefined' ? window : GLOBAL;
-	
+
 	// Deprecate support for the cloudkid namespace
 	if (typeof cloudkid === "undefined")
 	{
@@ -1894,7 +1903,7 @@ if(!Array.prototype.random)
 	}
 
 	//  Get classes from the PIXI.particles namespace
-	Object.defineProperties(global.cloudkid, 
+	Object.defineProperties(global.cloudkid,
 	{
 		AnimatedParticle: {
 			get: function()
