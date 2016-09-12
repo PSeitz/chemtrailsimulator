@@ -35,3 +35,46 @@ function keyboard(keyCode) {
     );
     return key;
 }
+
+
+// function mouse(canvas) {
+//     var mouse = {};
+//     mouse.code = keyCode;
+//     mouse.isDown = false;
+//     mouse.isUp = true;
+//     mouse.press = undefined;
+//     mouse.release = undefined;
+//     //The `downHandler`
+//     mouse.downHandler = function(event) {
+//     if (event.keyCode === mouse.code) {
+//         if (mouse.isUp && mouse.press) mouse.press();
+//         mouse.isDown = true;
+//         mouse.isUp = false;
+//
+//     }
+//     event.preventDefault();
+//     };
+//
+//     //The `upHandler`
+//     mouse.upHandler = function(event) {
+//     if (event.keyCode === mouse.code) {
+//         if (mouse.isDown && mouse.release) mouse.release();
+//         mouse.isDown = false;
+//         mouse.isUp = true;
+//     }
+//     event.preventDefault();
+//     };
+//
+//     //Attach event listeners
+//     canvas.addEventListener("mousedown", function(evt){
+//         flag = 0;
+//     }, false);
+//
+//     window.addEventListener(
+//         "keydown", mouse.downHandler.bind(mouse), false
+//     );
+//     window.addEventListener(
+//         "keyup", mouse.upHandler.bind(mouse), false
+//     );
+//     return mouse;
+// }
