@@ -54,6 +54,44 @@ function switchToCanvas(){
 function addCanvasStuff(){
     let canvas = document.getElementById("stage");
 
+
+    // var ongoingTouches = new Array();
+    // el.addEventListener("touchstart", handleStart, false);
+    // el.addEventListener("touchend", handleEnd, false);
+    // el.addEventListener("touchcancel", handleCancel, false);
+    // el.addEventListener("touchmove", handleMove, false);
+    //
+    // function handleStart(evt) {
+    //     evt.preventDefault();
+    //     log("touchstart.");
+    //     var ctx = canvas.getContext("2d");
+    //     var touches = evt.changedTouches;
+    //
+    //     for (var i = 0; i < touches.length; i++) {
+    //         log("touchstart:" + i + "...");
+    //         ongoingTouches.push(copyTouch(touches[i]));
+    //         var color = colorForTouch(touches[i]);
+    //         ctx.beginPath();
+    //         ctx.arc(touches[i].pageX, touches[i].pageY, 4, 0, 2 * Math.PI, false);  // a circle at the start
+    //         ctx.fillStyle = color;
+    //         ctx.fill();
+    //         log("touchstart:" + i + ".");
+    //     }
+    // }
+    let mouseDown = false
+    let mousePos = {}
+    canvas.addEventListener("mousedown", function(evt){
+        mouseDown = true
+        setXYFrom(mousePos, evt)
+    }, false);
+    canvas.addEventListener("mousemove", function(evt){
+        setXYFrom(mousePos, evt)
+    }, false);
+    canvas.addEventListener("mouseup", function(evt){
+        setXYFrom(mousePos, evt)
+        mouseDown = false
+    }, false);
+
     canvas.width=width;
     canvas.height=height;
 
@@ -151,6 +189,14 @@ function addCanvasStuff(){
                 if (left.isDown) thePlane.angle -= thePlane.rotationSpeed * delta;
                 if (right.isDown) thePlane.angle += thePlane.rotationSpeed * delta;
                 if (space.isDown) thePlane.spray(delta)
+
+                if (mouseDown) {
+                    //  thePlane.angle = getDegree(thePlane.sprite, mousePos)
+                    var x = thePlane.sprite.x - mousePos.x;
+                    var y = thePlane.sprite.y - mousePos.y;
+                    let radians = Math.atan2(y,x);
+                    thePlane.angle = radiansToDegrees(radians)
+                }
                 thePlane.move(delta);
                 thePlane.chemtrails.descend(delta);
                 thePlane.chemtrails.draw(stage);
