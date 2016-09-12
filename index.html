@@ -10,12 +10,6 @@
     </head>
     <body>
 
-        <canvas id="stage"></canvas>
-
-        <script>
-            var createjs = window;
-        </script>
-
         <script src="libs/pixi4.js"></script>
         <script src="libs/pixi-cocoontext.js"></script>
         <script src="libs/spriteUtilities.js"></script>
@@ -26,20 +20,18 @@
         <script src="libs/matter.js"></script>
         <script src="libs/faker.js"></script>
         <script src="shaders.js"></script>
+        <script src="person.js"></script>
         <script src="keyboard.js"></script>
         <script src="graphics.js"></script>
-        <script id="shader" type="shader">
-
-        precision mediump float;
-        uniform float time;
-
-        void main(){
-           gl_FragColor = vec4(sin(time),gl_FragCoord.y/1000.0,1.0);
-        }
-        </script>
         <script src="helper.js"></script>
         <script src="sounds.js"></script>
         <script src="main.js"></script>
+
+        <canvas id="stage" style='display:none'></canvas>
+        <p></p>
+        <a id="startit" href="#" class="myButton" onclick='switchToCanvas()' style='display:inline-block'>The Game!... Start it!! </a>
+        <p></p>
+        <a id="moneyyeshrich" href="#" class="myButton"  onclick='alert("yesh money rich")' style='display:inline-block'>Buy Plane Skins on -- www.c-t-sim-lotto.de</a>
 
     </body>
 </html>

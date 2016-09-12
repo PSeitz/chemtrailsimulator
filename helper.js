@@ -116,3 +116,38 @@ function degreesToRadians(degrees){
     return degrees / 180 * Math.PI
     // return degrees * Math.PI/180
 }
+
+function randomXPointWithMinDistance(minDistance, otherXs, minX, maxX){
+    let x, nearestNeighbour;
+    for (let i = 0; i < 1000; i++) {
+        x =  _.random(minX, maxX)
+        if (otherXs.length === 0) {
+            return x;
+        }
+
+        for (otherX of otherXs) {
+            let distance = Math.abs(otherX - x)
+            if (nearestNeighbour == undefined || distance < nearestNeighbour) {
+                nearestNeighbour = distance
+            }
+        }
+        if (nearestNeighbour > minDistance) {
+            break;
+        }
+    }
+
+    return x
+}
+
+function pluck(array, property){
+    let newArr = []
+    let props = property.split('.')
+    for (el of array) {
+        let pluckedObj = el;
+        for (prop of props) {
+            pluckedObj = pluckedObj[prop]
+        }
+        newArr.push(pluckedObj)
+    }
+    return newArr
+}
