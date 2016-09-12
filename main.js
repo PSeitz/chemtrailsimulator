@@ -1,4 +1,4 @@
-window.onload = init;
+// window.onload = init;
 
 let colors = [0xec407a,0xab47bc,0x26c6da,0xffca28,0x29b6f6,0xe84e40,0x5c6bc0,0xff7043,0x9ccc65];
 
@@ -25,19 +25,6 @@ function getNext(collection, name){
 
 let filter = PIXI.filters || PIXI.Filter;
 
-function pluck(array, property){
-    let newArr = []
-    let props = property.split('.')
-    for (el of array) {
-        let pluckedObj = el;
-        for (prop of props) {
-            pluckedObj = pluckedObj[prop]
-        }
-        newArr.push(pluckedObj)
-    }
-    return newArr
-}
-
 class Game {
     constructor(money) {
         this.money = money;
@@ -50,6 +37,21 @@ let height = 600;
 
 function init() {
 
+}
+
+function showhide(id) {
+    var e = document.getElementById(id);
+    e.style.display = (e.style.display == 'inline-block') ? 'none' : 'inline-block';
+ }
+
+function switchToCanvas(){
+    showhide('startit')
+    showhide('moneyyeshrich')
+    showhide('stage')
+    addCanvasStuff()
+}
+
+function addCanvasStuff(){
     let canvas = document.getElementById("stage");
 
     canvas.width=width;
@@ -86,89 +88,30 @@ function init() {
             //Create Cells
             let persons = []
 
-            function randomPointWithMinDistance(minDistance, otherXs){
-                let x, nearestNeighbour;
-                for (let i = 0; i < 1000; i++) {
-                    x =  _.random(0, width)
-                    if (otherXs.length === 0) {
-                        return x;
-                    }
-
-                    for (otherX of otherXs) {
-                        let distance = Math.abs(otherX - x)
-                        if (nearestNeighbour == undefined || distance < nearestNeighbour) {
-                            nearestNeighbour = distance
-                        }
-                    }
-                    if (nearestNeighbour > minDistance) {
-                        break;
-                    }
-                }
-
-                return x
-            }
-
             for (let i = 0; i < NUM_PERSONS; i++) {
                 let person = new Person(faker.name.findName(),  getNextColor());
                 let allXs = pluck(persons, 'position.x')
-
                 person.position = {
-                    x: randomPointWithMinDistance(5, allXs), y:height
+                    x: randomXPointWithMinDistance(5, allXs, 0, width), y:height
                 }
                 persons.push(person);
             }
 
-
             thePlane.position = { x: 100, y:height / 3 }
-            let planerDrawer = new PIXI.Graphics();
-            planerDrawer.beginFill(thePlane.color);
-            planerDrawer.drawRect(0,0, 35, 15);
-            planerDrawer.endFill();
-
-            let texture = planerDrawer.generateTexture();
-            thePlane.sprite = new PIXI.Sprite(texture)
-            setXY(thePlane.sprite.anchor, 0.5);
-            thePlane.sprite.anchor.x=0.3
-            setXYFrom(thePlane.sprite, thePlane.position)
+            addPlaneUI(thePlane)
             stage.addChild(thePlane.sprite);
-
 
             PIXI.cocoontext.CONST.TEXT_RESOLUTION =  window.devicePixelRatio;
 
             addPersons(persons);
             function addPersons(persons) {
-
                 for (let person of persons) {
-                    let container = new PIXI.DisplayObjectContainer();
-                    person.container = container;
-                    stage.addChild(container);
-
-                    let graphics = new PIXI.Graphics();
-                    drawPerson(graphics, person.color, person.position);
-
-                    let texture = graphics.generateTexture();
-                    person.sprite = new PIXI.Sprite(texture);
-                    person.sprite.interactive = false;
-
-                    setXY(person.sprite.anchor, 0.5);
-                    container.addChild(person.sprite);
-
-                    setXYFrom(person.container, person.position)
-
-                    person.text = new PIXI.cocoontext.CocoonText(person.name ,{font : '10px Arial', align : 'center', fill:"white"});
-                    setXY(person.text.anchor, 0.5);
-                    person.text.canvas.style.webkitFontSmoothing = "antialiased";
-                    container.addChild(person.text);
-                    person.text.y = - 20 - _.random(0, 80);
-
+                    addPersonUI(person, stage)
                 }
-
             }
-
 
             function addUIText(text){
                 let uitext = new PIXI.cocoontext.CocoonText( text,{font : '16px Arial', align : 'center', fill:"white"});
-                // setXY(uitext.anchor, 0.5);
                 uitext.canvas.style.webkitFontSmoothing = "antialiased";
                 stage.addChild(uitext);
                 uitext.y = 20;
@@ -180,16 +123,6 @@ function init() {
             moneyText.x = width - 20
             moneyText.anchor.x = 1
 
-            //Get shader code as a string
-            let shaderCode = document.getElementById("shader").innerHTML
-            let uniforms = {}
-            uniforms.time = {
-                type:"1f",
-                value:0.1
-            }
-
-
-
             //Capture the keyboard arrow keys
             let left = keyboard(37);
             let up = keyboard(38);
@@ -197,21 +130,17 @@ function init() {
             let down = keyboard(40);
             let space = keyboard(32);
 
-            let clouds = []
-
-
             let elapsed = Date.now();
 
             space.release = () => {
                 thePlane.chemtrails.completeLine()
             }
 
-            // start animating
             let start = performance.now();
-
             // *** ANIMATE
             animate();
-            function animate(timestamp) {
+            function animate() {
+                let timestamp = performance.now()
                 requestAnimationFrame(animate);
                 let delta = (timestamp - start) / 10;
                 start = timestamp;
@@ -219,19 +148,10 @@ function init() {
                 tankText.text = "Chemtrailtank: "+Math.round(thePlane.chemtrailTank)
                 moneyText.text = "Moneten: "+Math.round(game.money)
                 thePlane.sprite.rotation = degreesToRadians(thePlane.angle)
-                if (left.isDown) {
-                    thePlane.angle -= thePlane.rotationSpeed * delta;
-                }
-                if (right.isDown) {
-                    thePlane.angle += thePlane.rotationSpeed * delta;
-                  }
-                if (space.isDown) {
-                    thePlane.spray(delta)
-                }
-                thePlane.move();
-                for (cloud of clouds) {
-                    cloud.y += .1 * delta
-                }
+                if (left.isDown) thePlane.angle -= thePlane.rotationSpeed * delta;
+                if (right.isDown) thePlane.angle += thePlane.rotationSpeed * delta;
+                if (space.isDown) thePlane.spray(delta)
+                thePlane.move(delta);
                 thePlane.chemtrails.descend(delta);
                 thePlane.chemtrails.draw(stage);
 
@@ -257,18 +177,20 @@ function init() {
         }
     }
     class ChemtrailLine {
-        constructor(startPos, descendSpeed){
+        constructor(startPos, descendSpeed, chemTrailAmount){
             this.startHeight = startPos.y // height ratio
             this.descendation = 0;
             this.descendSpeed = descendSpeed
             this.positions = []
             this.positions.push(startPos)
             this.completed = false
+            this.chemTrailAmount = chemTrailAmount
         }
-        addPos(pos){
+        addTrail(pos, chemTrailAmount){
             if (lineDistance( _.last(this.positions), pos ) > 1) {
                 this.positions.push(pos)
             }
+            this.chemTrailAmount+=chemTrailAmount
         }
         completeLine(){
             this.completed = true;
@@ -331,12 +253,12 @@ function init() {
             this.currentLine.completeLine();
             this.currentLine = null;
         }
-        addPos(pos){
+        addTrail(pos, chemTrailAmount){
             if (!this.currentLine) {
-                this.currentLine = new ChemtrailLine(pos, this.descendSpeed)
+                this.currentLine = new ChemtrailLine(pos, this.descendSpeed, chemTrailAmount)
                 this.chemtrailLines.push(this.currentLine)
             }else{
-                this.currentLine.addPos(pos);
+                this.currentLine.addTrail(pos, chemTrailAmount);
             }
         }
         draw(stage){
@@ -362,17 +284,18 @@ function init() {
             this.position = initialPosition;
             this.rotationSpeed = 0.5;
         }
-        move(){
-            this.position = moveTowardsAngle(this.position, degreesToRadians(this.angle), this.speed);
+        move(delta){
+            this.position = moveTowardsAngle(this.position, degreesToRadians(this.angle), this.speed * delta);
             setXYFrom(this.sprite.position, this.position)
         }
         spray(delta){
             if (this.chemtrailTank <= 0) {
                 return;
             }
-            this.chemtrailTank -= (1 * delta);
+            let chemTrailAmount =  (1 * delta)
+            this.chemtrailTank -= chemTrailAmount;
             this.chemtrailTank = Math.max(0, this.chemtrailTank)
-            this.chemtrails.addPos(this.position)
+            this.chemtrails.addTrail(this.position, chemTrailAmount)
         }
     }
 
