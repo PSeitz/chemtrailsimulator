@@ -1,4 +1,4 @@
-// window.onload = init;
+window.onload = addCanvasStuff;
 
 let colors = [0xec407a,0xab47bc,0x26c6da,0xffca28,0x29b6f6,0xe84e40,0x5c6bc0,0xff7043,0x9ccc65];
 
@@ -51,46 +51,87 @@ function switchToCanvas(){
     addCanvasStuff()
 }
 
+
 function addCanvasStuff(){
     let canvas = document.getElementById("stage");
 
-
-    // var ongoingTouches = new Array();
-    // el.addEventListener("touchstart", handleStart, false);
-    // el.addEventListener("touchend", handleEnd, false);
-    // el.addEventListener("touchcancel", handleCancel, false);
-    // el.addEventListener("touchmove", handleMove, false);
-    //
-    // function handleStart(evt) {
-    //     evt.preventDefault();
-    //     log("touchstart.");
-    //     var ctx = canvas.getContext("2d");
-    //     var touches = evt.changedTouches;
-    //
-    //     for (var i = 0; i < touches.length; i++) {
-    //         log("touchstart:" + i + "...");
-    //         ongoingTouches.push(copyTouch(touches[i]));
-    //         var color = colorForTouch(touches[i]);
-    //         ctx.beginPath();
-    //         ctx.arc(touches[i].pageX, touches[i].pageY, 4, 0, 2 * Math.PI, false);  // a circle at the start
-    //         ctx.fillStyle = color;
-    //         ctx.fill();
-    //         log("touchstart:" + i + ".");
-    //     }
-    // }
     let mouseDown = false
-    let mousePos = {}
-    canvas.addEventListener("mousedown", function(evt){
+
+    // let mousePoses = []
+    let touchPos1 = undefined
+    let touchPos2 = undefined
+
+    var ongoingTouches = new Array();
+    canvas.addEventListener("touchstart", handleStart, false);
+    canvas.addEventListener("touchend", handleEnd, false);
+    canvas.addEventListener("touchcancel", handleCancel, false);
+    canvas.addEventListener("touchmove", handleMove, false);
+
+    function setXYFromTouch(touch, target){
+        target.x = touch.clientX
+        target.y = touch.clientY
+    }
+
+    function saveXYFromTouches(touches){
+        if(touches[0]) {
+            touchPos1 = touchPos1 || {}
+            setXYFromTouch(touches[0], touchPos1)
+        }
+        if(touches[1]){
+            touchPos2 = touchPos2 || {}
+            setXYFromTouch(touches[1], touchPos2)
+        }
+    }
+    function clearTouchPos(){
+        touchPos1 = undefined
+        touchPos2 = undefined
+    }
+    function handleStart(evt) {
+        evt.preventDefault();
         mouseDown = true
-        setXYFrom(mousePos, evt)
-    }, false);
-    canvas.addEventListener("mousemove", function(evt){
-        setXYFrom(mousePos, evt)
-    }, false);
-    canvas.addEventListener("mouseup", function(evt){
-        setXYFrom(mousePos, evt)
+        saveXYFromTouches(evt.touches)
+    }
+    function handleEnd(evt) {
+        evt.preventDefault();
         mouseDown = false
-    }, false);
+        clearTouchPos()
+    }
+    function handleCancel(evt) {
+        evt.preventDefault();
+        mouseDown = false
+        clearTouchPos()
+    }
+    function handleMove(evt) {
+        evt.preventDefault();
+        saveXYFromTouches(evt.touches)
+    }
+
+    // canvas.addEventListener("mousedown", function(evt){
+    //     mouseDown = true
+    //     // setXYFrom(mousePos, evt)
+    //     mousePoses.length = 0
+    //     mousePoses.push({
+    //         x:evt.x,
+    //         y:evt.y
+    //     })
+    // }, false);
+    // canvas.addEventListener("mousemove", function(evt){
+    //     // setXYFrom(mousePos, evt)
+    //     mousePoses.length = 0
+    //     mousePoses.push({
+    //         x:evt.x,
+    //         y:evt.y
+    //     })
+    // }, false);
+    // canvas.addEventListener("mouseup", function(evt){
+    //     // setXYFrom(mousePos, evt)
+    //     mousePoses.length = 0
+    //     mousePoses.push({
+    //         x:evt.x,
+    //         y:evt.y
+    //     })
+    //     mouseDown = false
+    // }, false);
 
     canvas.width=width;
     canvas.height=height;
@@ -147,6 +188,20 @@ function addCanvasStuff(){
                     addPersonUI(person, stage)
                 }
             }
+            function getAffectedPersons(bounds){
+                return _.filter(persons, function(person) {
+                    return _.inRange(person.position.x, bounds.x, bounds.x + bounds.width);
+                });
+            }
+
+            function poisonPersons(line){
+                let posison_persons = getAffectedPersons(line.getBoundaries())
+                for (person of posison_persons) {
+                    person.intoxicationLevel = line.getChemDensityOnGround();
+                    person.text.style = {font:"14px Arial",fill:"#FF0000"};
+                }
+                game.money+= height - line.startHeight
+            }
 
             function addUIText(text){
                 let uitext = new PIXI.cocoontext.CocoonText( text,{font : '16px Arial', align : 'center', fill:"white"});
@@ -188,22 +243,54 @@ function addCanvasStuff(){
                 thePlane.sprite.rotation = degreesToRadians(thePlane.angle)
                 if (left.isDown) thePlane.angle -= thePlane.rotationSpeed * delta;
                 if (right.isDown) thePlane.angle += thePlane.rotationSpeed * delta;
-                if (space.isDown) thePlane.spray(delta)
+
+
+                let isSpraying = space.isDown;
 
                 if (mouseDown) {
+                    function handleTouch(touchPos){
+                        if (getDistance( thePlane.sprite, touchPos ) < 70) {
+                            isSpraying = true
+                        }else{
+                            var x = thePlane.sprite.x - touchPos.x;
+                            var y = thePlane.sprite.y - touchPos.y;
+                            let radians = Math.atan2(y,x);
+                            // thePlane.angle = radiansToDegrees(radians)
+                            thePlane.angle = turnTowards(thePlane.angle, radiansToDegrees(radians),  thePlane.rotationSpeed * delta)
+                        }
+                    }
+                    if(touchPos1) handleTouch(touchPos1)
+                    if(touchPos2) handleTouch(touchPos2)
+
+                    // for (pos of mousePoses) {
+                    //     if (getDistance( thePlane.sprite, pos ) < 70) {
+                    //         isSpraying = true
+                    //     }else{
+                    //         var x = thePlane.sprite.x - pos.x;
+                    //         var y = thePlane.sprite.y - pos.y;
+                    //         let radians = Math.atan2(y,x);
+                    //         // thePlane.angle = radiansToDegrees(radians)
+                    //         thePlane.angle = turnTowards(thePlane.angle, radiansToDegrees(radians),  thePlane.rotationSpeed * delta)
+                    //     }
+                    // }
+
                     //  thePlane.angle = getDegree(thePlane.sprite, mousePos)
-                    var x = thePlane.sprite.x - mousePos.x;
-                    var y = thePlane.sprite.y - mousePos.y;
-                    let radians = Math.atan2(y,x);
-                    thePlane.angle = radiansToDegrees(radians)
+                    // var x = thePlane.sprite.x - mousePos.x;
+                    // var y = thePlane.sprite.y - mousePos.y;
+                    // let radians = Math.atan2(y,x);
+                    // // thePlane.angle = radiansToDegrees(radians)
+                    // thePlane.angle = turnTowards(thePlane.angle, radiansToDegrees(radians),  thePlane.rotationSpeed * delta)
                 }
+
+                if (isSpraying) thePlane.spray(delta)
+
                 thePlane.move(delta);
                 thePlane.chemtrails.descend(delta);
                 thePlane.chemtrails.draw(stage);
 
                 let lines = thePlane.chemtrails.hitsGround()
                 if (lines.length > 0) {
-                    game.money+= height - lines[0].startHeight
+                    poisonPersons(lines[0]);
                 }
                 renderer.render(stage)
             }
@@ -232,8 +319,13 @@ function addCanvasStuff(){
             this.completed = false
             this.chemTrailAmount = chemTrailAmount
         }
+        getChemDensityOnGround(){
+            let dense = this.chemTrailAmount / this.line.getBounds().width
+            let heightAplied = dense * ( (height - his.descendation) / height ) //balance -- linear height
+            return heightAplied
+        }
         addTrail(pos, chemTrailAmount){
-            if (lineDistance( _.last(this.positions), pos ) > 1) {
+            if (getDistance( _.last(this.positions), pos ) > 1) {
                 this.positions.push(pos)
             }
             this.chemTrailAmount+=chemTrailAmount
@@ -251,6 +343,9 @@ function addCanvasStuff(){
                 this.line.position.y += this.descendSpeed * delta
             }
             this.descendation += this.descendSpeed * delta
+        }
+        getBoundaries(){
+            return this.line.getBounds()
         }
         hitsGround(){
             if (!this.line) return false; // TODO
@@ -294,7 +389,6 @@ function addCanvasStuff(){
               return line.hitsGround()
             });
         }
-
         completeLine(){
             this.currentLine.completeLine();
             this.currentLine = null;
@@ -315,7 +409,7 @@ function addCanvasStuff(){
     }
 
 
-    function lineDistance( point1, point2 )
+    function getDistance( point1, point2 )
     {
         return Math.hypot(point2.x-point1.x, point2.y-point1.y)
     }
@@ -349,5 +443,6 @@ function addCanvasStuff(){
         constructor(name, color) {
             this.name = name;
             this.color = color;
+            this.intoxicationLevel = 0
         }
     }
