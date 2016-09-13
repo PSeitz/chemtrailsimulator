@@ -90,6 +90,21 @@ function getDegree(startPos, endPos){
     return radians
 }
 
+function normalizeDegree(degree){
+    if (degree < 0)return degree + 360
+    return degree
+}
+function turnTowards(degree, targetDegree, stepSize){
+    degree = normalizeDegree(degree)
+    targetDegree = normalizeDegree(targetDegree)
+    if (targetDegree-degree > 0) {
+        return turnRight(degree, stepSize)
+    }else{
+        return turnLeft(degree, stepSize)
+    }
+
+}
+
 // 0 180   -180 -0
 function turnRight(degree, amount){
     degree += amount;
