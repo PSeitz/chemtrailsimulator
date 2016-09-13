@@ -147,6 +147,20 @@ function addCanvasStuff(){
                     addPersonUI(person, stage)
                 }
             }
+            function getAffectedPersons(bounds){
+                return _.filter(persons, function(person) {
+                    return _.inRange(person.position.x, bounds.x, bounds.x + bounds.width);
+                });
+            }
+
+            function poisonPersons(line){
+                let posison_persons = getAffectedPersons(line.getBoundaries())
+                for (person of posison_persons) {
+                    person.intoxicationLevel = line.getChemDensityOnGround();
+                    person.text.style = {font:"14px Arial",fill:"#FF0000"};
+                }
+                game.money+= height - line.startHeight
+            }
 
             function addUIText(text){
                 let uitext = new PIXI.cocoontext.CocoonText( text,{font : '16px Arial', align : 'center', fill:"white"});
@@ -192,10 +206,10 @@ function addCanvasStuff(){
 
                 if (mouseDown) {
                     //  thePlane.angle = getDegree(thePlane.sprite, mousePos)
-                    var x = thePlane.sprite.x - mousePos.x;
-                    var y = thePlane.sprite.y - mousePos.y;
-                    let radians = Math.atan2(y,x);
-                    thePlane.angle = radiansToDegrees(radians)
+                    // var x = thePlane.sprite.x - mousePos.x;
+                    // var y = thePlane.sprite.y - mousePos.y;
+                    // let radians = Math.atan2(y,x);
+                    // thePlane.angle = radiansToDegrees(radians)
                 }
                 thePlane.move(delta);
                 thePlane.chemtrails.descend(delta);
@@ -203,7 +217,7 @@ function addCanvasStuff(){
 
                 let lines = thePlane.chemtrails.hitsGround()
                 if (lines.length > 0) {
-                    game.money+= height - lines[0].startHeight
+                    poisonPersons(lines[0]);
                 }
                 renderer.render(stage)
             }
@@ -232,6 +246,11 @@ function addCanvasStuff(){
             this.completed = false
             this.chemTrailAmount = chemTrailAmount
         }
+        getChemDensityOnGround(){
+            let dense = this.chemTrailAmount / this.line.getBounds().width
+            let heightAplied = dense * ( (height - his.descendation) / height ) //balance -- linear height
+            return heightAplied
+        }
         addTrail(pos, chemTrailAmount){
             if (lineDistance( _.last(this.positions), pos ) > 1) {
                 this.positions.push(pos)
@@ -251,6 +270,9 @@ function addCanvasStuff(){
                 this.line.position.y += this.descendSpeed * delta
             }
             this.descendation += this.descendSpeed * delta
+        }
+        getBoundaries(){
+            return this.line.getBounds()
         }
         hitsGround(){
             if (!this.line) return false; // TODO
@@ -294,7 +316,6 @@ function addCanvasStuff(){
               return line.hitsGround()
             });
         }
-
         completeLine(){
             this.currentLine.completeLine();
             this.currentLine = null;
@@ -349,5 +370,6 @@ function addCanvasStuff(){
         constructor(name, color) {
             this.name = name;
             this.color = color;
+            this.intoxicationLevel = 0
         }
     }
