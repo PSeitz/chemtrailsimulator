@@ -87,6 +87,8 @@ function addCanvasStuff(){
         touchPos2 = undefined
     }
     function handleStart(evt) {
+
+
         evt.preventDefault();
         mouseDown = true
         saveXYFromTouches(evt.touches)
@@ -198,16 +200,17 @@ function addCanvasStuff(){
             function handleChemtrailHitsGround(line){
                 let posison_persons = getAffectedPersons(line.getBoundaries())
                 for (person of posison_persons) {
-                    person.intoxicationLevel = line.getChemDensityOnGround();
+                    let dense = line.getChemDensityOnGround()
+                    let increase = person.increaseIntoxicationLevel(dense)
+                    game.money+= (increase)
                     person.text.style = {font:"14px Arial",fill:"#FF0000"};
                     // let emitter = getEmitter(person.container)
                     // emitters.push(emitter)
                 }
                 let emitter = getEmitter(line.container)
                 emitters.push(emitter)
-                game.money+= height - line.startHeight
+                // game.money+= height - line.startHeight
                 line.container.removeChild(line.line)
-
 
             }
 
@@ -275,16 +278,14 @@ function addCanvasStuff(){
 
                 }
 
+                thePlane.move(delta);
+                thePlane.chemtrails.draw(stage);
+                thePlane.chemtrails.descend(delta);
+
                 if (isSpraying) thePlane.spray(delta)
 
-                thePlane.move(delta);
-                thePlane.chemtrails.descend(delta);
-                thePlane.chemtrails.draw(stage);
-
                 let lines = thePlane.chemtrails.hitsGround()
-                if (lines.length > 0) {
-                    handleChemtrailHitsGround(lines[0]);
-                }
+                if (lines.length > 0) lines.forEach((line) => {handleChemtrailHitsGround(line)})
                 renderer.render(stage)
             }
 
@@ -336,7 +337,7 @@ function addCanvasStuff(){
                     this.positions[i].y += this.descendSpeed * delta
                 }
             }else{
-                this.container.position.y += this.descendSpeed * delta
+                this.container.position.y += this.descendSpeed * delta //hö
             }
             this.descendation += this.descendSpeed * delta
         }
@@ -351,8 +352,8 @@ function addCanvasStuff(){
             if(this.completed == true) return
             if(this.positions.length < 2) return
 
-            if (this.container) stage.removeChild(this.container)
-            this.container = new PIXI.Container();
+            if (this.line) stage.removeChild(this.line)
+            if (!this.container) this.container = new PIXI.Container();
 
             this.line = new PIXI.Graphics();
 
@@ -474,5 +475,10 @@ function addCanvasStuff(){
             this.color = color;
             this.personType = personType;
             this.intoxicationLevel = 0
+        }
+        increaseIntoxicationLevel(poison){
+            let prev = this.intoxicationLevel
+            this.intoxicationLevel = Math.max(10, this.intoxicationLevel+poison)
+            return this.intoxicationLevel - prev
         }
     }
