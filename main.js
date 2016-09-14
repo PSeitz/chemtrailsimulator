@@ -194,13 +194,20 @@ function addCanvasStuff(){
                 });
             }
 
-            function poisonPersons(line){
+            let emitters = []
+            function chemtrailHitsGround(line){
                 let posison_persons = getAffectedPersons(line.getBoundaries())
                 for (person of posison_persons) {
                     person.intoxicationLevel = line.getChemDensityOnGround();
                     person.text.style = {font:"14px Arial",fill:"#FF0000"};
+                    // let emitter = getEmitter(person.container)
+                    // emitters.push(emitter)
                 }
+                let emitter = getEmitter(line.container)
+                emitters.push(emitter)
                 game.money+= height - line.startHeight
+
+
             }
 
             function addUIText(text){
@@ -244,6 +251,9 @@ function addCanvasStuff(){
                 if (left.isDown) thePlane.angle -= thePlane.rotationSpeed * delta;
                 if (right.isDown) thePlane.angle += thePlane.rotationSpeed * delta;
 
+                for (emitter of emitters) {
+                    emitter.update(delta * 0.01);
+                }
 
                 let isSpraying = space.isDown;
 
@@ -262,24 +272,6 @@ function addCanvasStuff(){
                     if(touchPos1) handleTouch(touchPos1)
                     if(touchPos2) handleTouch(touchPos2)
 
-                    // for (pos of mousePoses) {
-                    //     if (getDistance( thePlane.sprite, pos ) < 70) {
-                    //         isSpraying = true
-                    //     }else{
-                    //         var x = thePlane.sprite.x - pos.x;
-                    //         var y = thePlane.sprite.y - pos.y;
-                    //         let radians = Math.atan2(y,x);
-                    //         // thePlane.angle = radiansToDegrees(radians)
-                    //         thePlane.angle = turnTowards(thePlane.angle, radiansToDegrees(radians),  thePlane.rotationSpeed * delta)
-                    //     }
-                    // }
-
-                    //  thePlane.angle = getDegree(thePlane.sprite, mousePos)
-                    // var x = thePlane.sprite.x - mousePos.x;
-                    // var y = thePlane.sprite.y - mousePos.y;
-                    // let radians = Math.atan2(y,x);
-                    // // thePlane.angle = radiansToDegrees(radians)
-                    // thePlane.angle = turnTowards(thePlane.angle, radiansToDegrees(radians),  thePlane.rotationSpeed * delta)
                 }
 
                 if (isSpraying) thePlane.spray(delta)
@@ -290,7 +282,7 @@ function addCanvasStuff(){
 
                 let lines = thePlane.chemtrails.hitsGround()
                 if (lines.length > 0) {
-                    poisonPersons(lines[0]);
+                    chemtrailHitsGround(lines[0]);
                 }
                 renderer.render(stage)
             }
@@ -321,7 +313,7 @@ function addCanvasStuff(){
         }
         getChemDensityOnGround(){
             let dense = this.chemTrailAmount / this.line.getBounds().width
-            let heightAplied = dense * ( (height - his.descendation) / height ) //balance -- linear height
+            let heightAplied = dense * ( (height - this.descendation) / height ) //balance -- linear height
             return heightAplied
         }
         addTrail(pos, chemTrailAmount){
@@ -340,7 +332,7 @@ function addCanvasStuff(){
                     this.positions[i].y += this.descendSpeed * delta
                 }
             }else{
-                this.line.position.y += this.descendSpeed * delta
+                this.container.position.y += this.descendSpeed * delta
             }
             this.descendation += this.descendSpeed * delta
         }
@@ -355,17 +347,24 @@ function addCanvasStuff(){
             if(this.completed == true) return
             if(this.positions.length < 2) return
 
-            if (this.line) stage.removeChild(this.line)
+            if (this.container) stage.removeChild(this.container)
+            this.container = new PIXI.DisplayObjectContainer();
 
             this.line = new PIXI.Graphics();
 
             this.line.lineStyle(5, 0x88BB88, 1);
-            this.line.moveTo(this.positions[0].x,this.positions[0].y);
+            let initX = this.positions[0].x, initY = this.positions[0].y
+            this.container.x = initX
+            this.container.y = initY
+            // this.line.moveTo(this.positions[0].x,this.positions[0].y);
+            this.line.moveTo(0, 0)
             for (let i = 1; i < this.positions.length; i++) {
-                this.line.lineTo(this.positions[i].x,this.positions[i].y);
+                this.line.lineTo(this.positions[i].x - initX ,this.positions[i].y-initY);
             }
             this.line.endFill();
-            stage.addChild(this.line);
+
+            stage.addChild(this.container);
+            this.container.addChild(this.line);
         }
     }
     class Chemtrails {
@@ -439,10 +438,29 @@ function addCanvasStuff(){
         }
     }
 
+    function Enum(a){
+      let i = Object
+        .keys(a)
+        .reduce((o,k)=>(o[a[k]]=k,o),{});
+
+      return Object.freeze(
+        Object.keys(a).reduce(
+          (o,k)=>(o[k]=a[k],o), v=>i[v]
+        )
+      );
+    } // y u so terse?
+
+    const PERSON_TYPE = Enum({
+        a: 0,
+        b: 1,
+        c: "banana"
+    });
+
     class Person {
-        constructor(name, color) {
+        constructor(name, color, personType) {
             this.name = name;
             this.color = color;
+            this.personType = personType;
             this.intoxicationLevel = 0
         }
     }

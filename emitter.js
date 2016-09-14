@@ -1,4 +1,4 @@
-function getEmitter(){
+function getEmitter(container){
 
     // Create a new emitter
     var emitter = new PIXI.particles.Emitter(
@@ -6,7 +6,7 @@ function getEmitter(){
         // The PIXI.Container to put the emitter in
         // if using blend modes, it's important to put this
         // on top of a bitmap, and not use the root stage Container
-        stage,
+        container,
         // The collection of particle images to use
         [PIXI.Texture.fromImage('img/smokeparticle.png')],
 
@@ -45,8 +45,8 @@ function getEmitter(){
           "max": 100
          },
          "lifetime": {
-          "min": 20.7,
-          "max": 21.5
+          "min": 0.7,
+          "max": 1.5
          },
          "blendMode": "overlay",
          "frequency": 0.01,
