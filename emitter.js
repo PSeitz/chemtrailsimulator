@@ -1,4 +1,4 @@
-function getEmitter(){
+function getEmitter(container){
 
     // Create a new emitter
     var emitter = new PIXI.particles.Emitter(
@@ -6,63 +6,74 @@ function getEmitter(){
         // The PIXI.Container to put the emitter in
         // if using blend modes, it's important to put this
         // on top of a bitmap, and not use the root stage Container
-        stage,
+        container,
         // The collection of particle images to use
-        [PIXI.Texture.fromImage('img/smokeparticle.png')],
+        [PIXI.Texture.fromImage('img/particle.png')],
 
         // Emitter configuration, edit this to change the look
         // of the emitter
         {
-         "alpha": {
-          "start": 0.1,
-          "end": 0.1
-         },
-         "scale": {
-          "start": 0.3,
-          "end": .3,
-          "minimumScaleMultiplier": 1
-         },
-         "color": {
-          "start": "#a1ada5",
-          "end": "#49802f"
-         },
-         "speed": {
-          "start": 0.05,
-          "end": 1.05
-         },
-         "acceleration": {
-          "x": 0,
-          "y": 30
-         },
-         "maxVelocityY" : 10,
-         "startRotation": {
-          "min": 190,
-          "max": 350
-         },
-         "noRotation": false,
-         "rotationSpeed": {
-          "min": 20 ,
-          "max": 100
-         },
-         "lifetime": {
-          "min": 20.7,
-          "max": 21.5
-         },
-         "blendMode": "overlay",
-         "frequency": 0.01,
-         "emitterLifetime": -1,
-         "maxParticles": 5000,
-         "pos": {
-          "x": 0,
-          "y": 0
-         },
-         "addAtBack": true,
-         "spawnType": "circle",
-         "spawnCircle": {
-          "x": 0,
-          "y": 0,
-          "r": 0
-         }
+        	"alpha": {
+        		"start": 0.74,
+        		"end": 0
+        	},
+        	"scale": {
+        		"start": 0.5,
+        		"end": 0.12,
+        		"minimumScaleMultiplier": 0.1
+        	},
+        	"color": {
+        		"start": "#22bd17",
+        		"end": "#100f0c"
+        	},
+        	"speed": {
+        		"start": 70,
+        		"end": 0
+        	},
+        	"acceleration": {
+        		"x": 0,
+        		"y": 0
+        	},
+        	"startRotation": {
+        		"min": 0,
+        		"max": 360
+        	},
+        	"noRotation": false,
+        	"rotationSpeed": {
+        		"min": 0,
+        		"max": 200
+        	},
+        	"lifetime": {
+        		"min": 0.5,
+        		"max": 1
+        	},
+        	"blendMode": "normal",
+        	"ease": [
+        		{
+        			"s": 0,
+        			"cp": 0.329,
+        			"e": 0.548
+        		},
+        		{
+        			"s": 0.548,
+        			"cp": 0.767,
+        			"e": 0.876
+        		},
+        		{
+        			"s": 0.876,
+        			"cp": 0.985,
+        			"e": 1
+        		}
+        	],
+        	"frequency": 0.001,
+        	"emitterLifetime": 0.1,
+        	"maxParticles": 1000,
+        	"pos": {
+        		"x": 0,
+        		"y": 0
+        	},
+        	"addAtBack": true,
+        	"spawnType": "point"
         }
     );
     return emitter;

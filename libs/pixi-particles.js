@@ -663,7 +663,6 @@ if(!Array.prototype.random)
 			{
                     this.velocity.x += this.acceleration.x * delta;
                 if (this.velocity.y < this.maxVelocityY){
-                    console.log(this.velocity.y)
                     this.velocity.y += this.acceleration.y * delta;
                 }
 
