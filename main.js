@@ -195,7 +195,7 @@ function addCanvasStuff(){
             }
 
             let emitters = []
-            function chemtrailHitsGround(line){
+            function handleChemtrailHitsGround(line){
                 let posison_persons = getAffectedPersons(line.getBoundaries())
                 for (person of posison_persons) {
                     person.intoxicationLevel = line.getChemDensityOnGround();
@@ -206,6 +206,7 @@ function addCanvasStuff(){
                 let emitter = getEmitter(line.container)
                 emitters.push(emitter)
                 game.money+= height - line.startHeight
+                line.container.removeChild(line.line)
 
 
             }
@@ -282,7 +283,7 @@ function addCanvasStuff(){
 
                 let lines = thePlane.chemtrails.hitsGround()
                 if (lines.length > 0) {
-                    chemtrailHitsGround(lines[0]);
+                    handleChemtrailHitsGround(lines[0]);
                 }
                 renderer.render(stage)
             }
@@ -322,6 +323,9 @@ function addCanvasStuff(){
             }
             this.chemTrailAmount+=chemTrailAmount
         }
+        shouldCompleteLine(){
+            return this.positions.length > 5
+        }
         completeLine(){
             this.completed = true;
             this.positions = []
@@ -341,14 +345,14 @@ function addCanvasStuff(){
         }
         hitsGround(){
             if (!this.line) return false; // TODO
-            return this.startHeight + this.descendation + 40 > height
+            return this.startHeight + this.descendation + 10 > height
         }
         draw(stage){
             if(this.completed == true) return
             if(this.positions.length < 2) return
 
             if (this.container) stage.removeChild(this.container)
-            this.container = new PIXI.DisplayObjectContainer();
+            this.container = new PIXI.Container();
 
             this.line = new PIXI.Graphics();
 
@@ -392,12 +396,20 @@ function addCanvasStuff(){
             this.currentLine.completeLine();
             this.currentLine = null;
         }
+        newChemtrailLine(pos, chemTrailAmount){
+            this.currentLine = new ChemtrailLine(pos, this.descendSpeed, chemTrailAmount)
+            this.chemtrailLines.push(this.currentLine)
+        }
         addTrail(pos, chemTrailAmount){
             if (!this.currentLine) {
-                this.currentLine = new ChemtrailLine(pos, this.descendSpeed, chemTrailAmount)
-                this.chemtrailLines.push(this.currentLine)
+                this.newChemtrailLine(pos, chemTrailAmount)
             }else{
-                this.currentLine.addTrail(pos, chemTrailAmount);
+                if (this.currentLine.shouldCompleteLine()) {
+                    this.completeLine()
+                    this.newChemtrailLine(pos, chemTrailAmount)
+                }else{
+                    this.currentLine.addTrail(pos, chemTrailAmount);
+                }
             }
         }
         draw(stage){
