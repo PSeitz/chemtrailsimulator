@@ -227,6 +227,10 @@ function addCanvasStuff(){
             moneyText.x = width - 20
             moneyText.anchor.x = 1
 
+            let spottedText = addUIText(thePlane.spotted)
+            spottedText.x = width / 2
+            spottedText.anchor.x = .5
+
             //Capture the keyboard arrow keys
             let left = keyboard(37);
             let up = keyboard(38);
@@ -251,6 +255,8 @@ function addCanvasStuff(){
 
                 tankText.text = "Chemtrailtank: "+Math.round(thePlane.chemtrailTank)
                 moneyText.text = "Moneten: "+Math.round(game.money)
+                spottedText.text = "Spotted: "+Math.round(thePlane.spotted)
+
                 thePlane.sprite.rotation = degreesToRadians(thePlane.angle)
                 if (left.isDown) thePlane.angle -= thePlane.rotationSpeed * delta;
                 if (right.isDown) thePlane.angle += thePlane.rotationSpeed * delta;
@@ -276,6 +282,10 @@ function addCanvasStuff(){
                     if(touchPos1) handleTouch(touchPos1)
                     if(touchPos2) handleTouch(touchPos2)
 
+                }
+
+                for (person of persons) {
+                    thePlane.spotted += person.spotPlane(thePlane, delta)
                 }
 
                 thePlane.move(delta);
@@ -337,7 +347,9 @@ function addCanvasStuff(){
                     this.positions[i].y += this.descendSpeed * delta
                 }
             }else{
-                this.container.position.y += this.descendSpeed * delta //hö
+                if (this.container) { //hö
+                    this.container.position.y += this.descendSpeed * delta
+                }
             }
             this.descendation += this.descendSpeed * delta
         }
@@ -432,13 +444,19 @@ function addCanvasStuff(){
             this.color = color;
             this.chemtrailTank = 300;
             this.speed = 1;
+            this.maxSpeed = 2;
             this.angle = 180;
             this.position = initialPosition;
             this.rotationSpeed = 0.5;
+            this.spotted = 0;
         }
         move(delta){
             this.position = moveTowardsAngle(this.position, degreesToRadians(this.angle), this.speed * delta);
             setXYFrom(this.sprite.position, this.position)
+            if ( degreesToRadians(this.angle) < 0) {
+                this.speed += 0.1
+                this.speed = Math.min(this.speed, this.maxSpeed)
+            }
         }
         spray(delta){
             if (this.chemtrailTank <= 0) {
@@ -480,5 +498,12 @@ function addCanvasStuff(){
             let prev = this.intoxicationLevel
             this.intoxicationLevel = Math.max(10, this.intoxicationLevel+poison)
             return this.intoxicationLevel - prev
+        }
+        spotPlane(thePlane, delta){
+            let planeDistance = getDistance( this.position, thePlane.position );
+            if (planeDistance < 100) {
+                return planeDistance / 100 * delta
+            }
+            return 0
         }
     }
